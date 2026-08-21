@@ -47,9 +47,15 @@ This is what makes stage-per-session possible:
 2. Wire the four stage-start prompts (also in `templates.md`) into the workspace — a `PROMPTS.md` in the root, or into each stage folder's CONTEXT.md — so the user runs each stage as a fresh session that loads `incidents/<id>/STATE.md` + that stage's files, nothing else.
 3. Make each stage's contract end with: update STATE.md (including files-consulted), emit the load report, stop.
 
+For docs that must stay whole (reference material someone occasionally needs entire), generate a section index instead of splitting: `bash scripts/make_index.sh path/to/doc.md > path/to/doc.index.md` — readers load the 1–2 KB index, grep the section they need, and slice.
+
 ## Step 6 — Re-measure
 
 Run one representative incident through the four fresh-session stages. Record `/cost` per stage and the load reports into `_audit/RESULTS.md` next to the baseline, with the delta. If the drop is small, the residue is almost always floor (back to step 2) or session shape (stages still run inside one conversation — check how the user is actually invoking them).
+
+## Step 7 — Deliver the report
+
+Write the full findings as `TOKEN_LEAK_AUDIT.md` in the workspace root, following [report-template.md](report-template.md) exactly: executive summary, leaks by risk with real byte/token figures, patterns with per-fix savings and effort, scorecard, actionable next steps by horizon, and a measurement plan with expected `/context` and `/cost` numbers. Price annual figures at the current model's input rate and say so — per-turn resend makes real savings larger than the printed number, and the report should admit that direction rather than overclaim.
 
 ## What not to do
 

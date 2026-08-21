@@ -16,6 +16,7 @@ Folder structure controls what *can* be loaded per stage. Your bill is controlle
 
 - **Claude app / Cowork:** open `dist/icm-token-discipline.skill` in a conversation and save it, or attach the file to a chat.
 - **Claude Code:** clone this repo into `~/.claude/skills/icm-token-discipline` (SKILL.md sits at the repo root, so the clone is the skill).
+- **Slash command (Claude Code, optional):** copy `commands/audit-token-leaks.md` into `~/.claude/commands/` (or a project's `.claude/commands/`) — then `/audit-token-leaks` runs the full audit in one keystroke. Prefer `/audittokenleaks`? Rename the file to `audittokenleaks.md`; the filename is the command.
 
 Pairs with the [icm-architect](https://arxiv.org/abs/2603.16021) skill: that one designs the workspace; this one polices what gets loaded from it and what it costs.
 
@@ -25,8 +26,11 @@ Tested with paired agent runs — identical tasks, one agent with the skill, one
 
 | Round | Testbed | With skill | Baseline |
 |---|---|---|---|
-| 1 | Synthetic incident workspace with seeded leaks | 14/14 checks | 6/14 |
-| 2 | Real public repos: OpenAI Codex monorepo, Express, Flask | 21/21 checks | 19/21 |
+| 1 | Synthetic incident workspace with seeded leaks | 14/14 checks | 6/14 (no skill) |
+| 2 | Real public repos: OpenAI Codex monorepo, Express, Flask | 21/21 checks | 19/21 (no skill) |
+| 3 | All five testbeds, v1.1 vs v1 | 42/43 checks | 36/43 (v1) |
+
+v1.1 adds: a session guardrail (stage done → `/clear`, idle-gap warning for the ~5-minute cache expiry), the `TOKEN_LEAK_AUDIT.md` report template every audit delivers, `scripts/make_index.sh` (section indexes for big docs — in round 3 it indexed a 44k-token README without ever reading it), and conclusions-only output caps.
 
 Highlights: on the seeded workspace the audit removed all 8 mechanical flags and cut the intake stage's resident context from ~17k to ~2.6k tokens; on the Codex monorepo the audit used 18% fewer tokens and 39% less time than baseline while finding a real leak (a 22.5 KB root AGENTS.md ≈ 5.6k tokens auto-loaded per session) and changing zero existing files. On small scoped tasks the skill's ~2k self-load makes it roughly break-even on raw tokens — its wins compound with context size and session length, which is where real bills live. Modeled per-incident cost under the skill's session pattern: 3.5–8× lower (assumptions in `references/mechanics.md`).
 

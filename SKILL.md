@@ -11,7 +11,7 @@ This skill is itself ICM-shaped: this file is the catalog (~1.3k tokens). Read a
 
 ## Triage — pick a mode
 
-- User asks to **audit, fix, restructure, course-correct, or explain cost** → Audit mode: run `scripts/icm_audit.sh` from the workspace root, then follow [references/audit.md](references/audit.md) step by step. Read [references/mechanics.md](references/mechanics.md) before promising any savings number.
+- User asks to **audit, fix, restructure, course-correct, or explain cost** → Audit mode: run `scripts/icm_audit.sh` from the workspace root, follow [references/audit.md](references/audit.md) step by step, and write the findings as `TOKEN_LEAK_AUDIT.md` using [references/report-template.md](references/report-template.md). Read [references/mechanics.md](references/mechanics.md) before promising any savings number.
 - User is **working an incident or a stage** → Discipline mode: apply the seven rules below. If the workspace has never been audited, offer the audit once, in one line, and carry on.
 
 ## Why structure alone didn't cut the bill
@@ -28,9 +28,11 @@ Every API call re-sends the entire conversation so far as input. There is no "se
 
 **4. One stage per session; state lives on disk.** End every stage by writing `incidents/<id>/STATE.md` (≤40 lines, template in templates.md), including the *files already consulted* list. Then tell the user the stage is done and the next stage should start after `/clear` (or in a fresh session). The next stage loads STATE.md plus its own stage folder — never conversation scrollback. This is the single biggest lever: four short sessions with a 40-line handoff re-bill a 40-line file; four stages in one conversation re-bill everything, every turn.
 
+**Guardrail:** when a stage completes, the session is over. If asked to continue into the next stage in the same conversation, write STATE.md first and recommend `/clear` — proceed only if the user explicitly declines after hearing why (each further turn re-bills everything loaded so far). And if a pause longer than ~5 minutes is coming mid-stage, close the stage now: the prompt cache expires on idle, so the next message after a break re-bills the entire history at write rates (~12× the cached price). Sessions measured in hours are the leak; sessions measured in minutes are the fix.
+
 **5. Never re-read.** If a file is already in context this session (including CLAUDE.md, which Claude Code auto-loads), reference it — a second Read doubles the charge for zero new information. Across sessions, STATE.md's consulted-files list plays the same role: trust recorded conclusions instead of re-deriving them.
 
-**6. Close every stage with a load report.** Exact format in templates.md: each file read → bytes → est. tokens (bytes ÷ 4), one total, one line naming the session floor as separate. If the stage total exceeds ~8k, say which rule was broken and what to change — don't just report the overrun. State that these are estimates; real numbers come from `/context` (composition) and `/cost` (spend) in Claude Code.
+**6. Close every stage with a load report — and a short one.** Exact format in templates.md: each file read → bytes → est. tokens (bytes ÷ 4), one total, one line naming the session floor as separate, one session-hygiene line (`/clear` next). If the stage total exceeds ~8k, say which rule was broken and what to change — don't just report the overrun. State that these are estimates; real numbers come from `/context` (composition) and `/cost` (spend) in Claude Code. The stage output itself is part of the budget: conclusions only, ≤~40 lines, never restating loaded file content — output tokens bill ~5× input, and everything echoed rides along in every later turn.
 
 **7. Crawling goes to scripts and subagents, not the main context.** Status scans, index rebuilds, file maps: shell one-liners, results summarized. Broad exploration ("which modules touch retry logic?"): a subagent that returns a ≤10-line answer, so the search transcript never enters this session. Subagent tokens still bill — the win is that a short summary replaces a long transcript in every later turn — so give subagents narrow questions, not open wanders.
 
@@ -43,4 +45,6 @@ Intake/classification and schema verification are mechanical — run them on the
 - [references/audit.md](references/audit.md) — the course-correction procedure: baseline measurement, floor trim, monolith splits, MODULES.md, state pattern, re-measure. Read in Audit mode.
 - [references/mechanics.md](references/mechanics.md) — how Claude Code API billing actually works: per-turn resend, prompt caching, the session floor, why staged messages in one chat don't save much, where real numbers live. Read before explaining or estimating cost.
 - [references/templates.md](references/templates.md) — copy-paste blocks: MODULES.md, STATE.md, the four stage-start prompts, load report, routing rows, lean CLAUDE.md skeleton.
+- [references/report-template.md](references/report-template.md) — the TOKEN_LEAK_AUDIT.md structure every audit delivers: findings by risk, quick wins with effort, scorecard, measurement plan. Read in Audit mode when writing the report.
 - [scripts/icm_audit.sh](scripts/icm_audit.sh) — mechanical audit: sizes, oversize files, CLAUDE.md imports, MCP config, missing map/state files. Run it; don't re-derive its findings by reading files.
+- [scripts/make_index.sh](scripts/make_index.sh) — generates a section index (headings, line numbers, per-section token estimates) for any large markdown file. Use it to build `.index.md` files instead of hand-writing them.

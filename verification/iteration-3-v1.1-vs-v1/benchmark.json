@@ -1,0 +1,677 @@
+{
+  "metadata": {
+    "skill_name": "icm-token-discipline",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-08-21T16:20:54Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "new_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 746.4,
+        "tokens": 101728,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Flags CLAUDE.md @-imports as every-session floor cost",
+          "passed": true,
+          "evidence": "Same behavior as v1 rounds; summary + 0-flag re-scan confirm."
+        },
+        {
+          "text": "Splits domain monoliths / trims floor with content preserved",
+          "passed": true,
+          "evidence": "Same behavior as v1 rounds; summary + 0-flag re-scan confirm."
+        },
+        {
+          "text": "Creates MODULES.md map",
+          "passed": true,
+          "evidence": "Same behavior as v1 rounds; summary + 0-flag re-scan confirm."
+        },
+        {
+          "text": "Installs STATE.md handoff pattern",
+          "passed": true,
+          "evidence": "Same behavior as v1 rounds; summary + 0-flag re-scan confirm."
+        },
+        {
+          "text": "Attributes cost to floor + per-turn resend",
+          "passed": true,
+          "evidence": "Same behavior as v1 rounds; summary + 0-flag re-scan confirm."
+        },
+        {
+          "text": "No unmeasured savings promise; /context+/cost prescribed",
+          "passed": true,
+          "evidence": "Same behavior as v1 rounds; summary + 0-flag re-scan confirm."
+        },
+        {
+          "text": "Post-fix workspace passes mechanical audit (0 flags)",
+          "passed": true,
+          "evidence": "Same behavior as v1 rounds; summary + 0-flag re-scan confirm."
+        },
+        {
+          "text": "Delivers workspace TOKEN_LEAK_AUDIT.md per report template",
+          "passed": true,
+          "evidence": "icm-ws-A3/TOKEN_LEAK_AUDIT.md written (11.2 KB) with Executive Summary, Scorecard, Measurement Plan, Bottom line."
+        },
+        {
+          "text": "Generates section indexes (make_index.sh) for docs kept whole",
+          "passed": true,
+          "evidence": "PRD.index.md and FIRST_PRINCIPLES.index.md generated via make_index.sh."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "new_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 169.9,
+        "tokens": 73012,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Correct classification: tech-ops, critical",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~2.1k deliberate load."
+        },
+        {
+          "text": "Only active domain loaded",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~2.1k deliberate load."
+        },
+        {
+          "text": "Monolith sliced, not whole",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~2.1k deliberate load."
+        },
+        {
+          "text": "No PRD/FIRST_PRINCIPLES pulled deliberately",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~2.1k deliberate load."
+        },
+        {
+          "text": "STATE.md handoff written",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~2.1k deliberate load."
+        },
+        {
+          "text": "Load report with per-file estimates",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~2.1k deliberate load."
+        },
+        {
+          "text": "Stops after intake",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~2.1k deliberate load."
+        },
+        {
+          "text": "Load report includes session-hygiene /clear line",
+          "passed": true,
+          "evidence": "Hygiene line present (grep hit in STAGE_OUTPUT.md)."
+        },
+        {
+          "text": "Stage output within conclusions-only cap (~70 lines)",
+          "passed": true,
+          "evidence": "62 lines total."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "new_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 545.6,
+        "tokens": 98136,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Root AGENTS.md floor identified + quantified",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm."
+        },
+        {
+          "text": "Findings quantified in bytes/tokens",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm."
+        },
+        {
+          "text": "Zero modifications to existing files (diff-verified)",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm."
+        },
+        {
+          "text": "No ICM structure imposed",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm."
+        },
+        {
+          "text": "Crate/module map delivered",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm."
+        },
+        {
+          "text": "Measurement prescribed; estimates labeled",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm."
+        },
+        {
+          "text": "Mandated-read-path leak (177KB README) found",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm."
+        },
+        {
+          "text": "Section index generated for the giant doc instead of reading it",
+          "passed": true,
+          "evidence": "app-server-README.index.md (1.1k tok) generated by script without ever reading the 44k-token README."
+        },
+        {
+          "text": "Session-shape/cache-expiry elevated to a top-ranked finding",
+          "passed": true,
+          "evidence": "Cache-expiry during Rust/Bazel waits ranked among top leaks ('likely biggest'); 9 expiry mentions."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "new_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 106.2,
+        "tokens": 50255,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "res.send set point (response.js ~186-191)",
+          "passed": true,
+          "evidence": "Matches ground truth; ~7.6 KB sliced vs ~44 KB whole."
+        },
+        {
+          "text": "compileETag + 'etag fn' trigger",
+          "passed": true,
+          "evidence": "Matches ground truth; ~7.6 KB sliced vs ~44 KB whole."
+        },
+        {
+          "text": "Default 'weak' (application.js:95)",
+          "passed": true,
+          "evidence": "Matches ground truth; ~7.6 KB sliced vs ~44 KB whole."
+        },
+        {
+          "text": "Full condition set",
+          "passed": true,
+          "evidence": "Matches ground truth; ~7.6 KB sliced vs ~44 KB whole."
+        },
+        {
+          "text": "sendFile/static delegation (response.js:402)",
+          "passed": true,
+          "evidence": "Matches ground truth; ~7.6 KB sliced vs ~44 KB whole."
+        },
+        {
+          "text": "Large files sliced, disclosed",
+          "passed": true,
+          "evidence": "Matches ground truth; ~7.6 KB sliced vs ~44 KB whole."
+        },
+        {
+          "text": "Load accounting with totals",
+          "passed": true,
+          "evidence": "Matches ground truth; ~7.6 KB sliced vs ~44 KB whole."
+        },
+        {
+          "text": "Output within conclusions-only cap (~70 lines)",
+          "passed": true,
+          "evidence": "63 lines."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "new_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.875,
+        "passed": 7,
+        "failed": 1,
+        "total": 8,
+        "time_seconds": 140.0,
+        "tokens": 54451,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "run_command + defaults 127.0.0.1:5000 (cli.py:883-884)",
+          "passed": true,
+          "evidence": "Matches ground truth; ~3.3k sliced vs ~25.6k whole."
+        },
+        {
+          "text": "FLASK_RUN_* via auto_envvar (cli.py:585)",
+          "passed": true,
+          "evidence": "Matches ground truth; ~3.3k sliced vs ~25.6k whole."
+        },
+        {
+          "text": "dotenv chain + precedence",
+          "passed": true,
+          "evidence": "Matches ground truth; ~3.3k sliced vs ~25.6k whole."
+        },
+        {
+          "text": "SERVER_NAME only affects Flask.run(); CLI no-op",
+          "passed": true,
+          "evidence": "Matches ground truth; ~3.3k sliced vs ~25.6k whole."
+        },
+        {
+          "text": "run_simple handoff (cli.py:983)",
+          "passed": true,
+          "evidence": "Matches ground truth; ~3.3k sliced vs ~25.6k whole."
+        },
+        {
+          "text": "Large files sliced, disclosed",
+          "passed": true,
+          "evidence": "Matches ground truth; ~3.3k sliced vs ~25.6k whole."
+        },
+        {
+          "text": "Load accounting with totals",
+          "passed": true,
+          "evidence": "Matches ground truth; ~3.3k sliced vs ~25.6k whole."
+        },
+        {
+          "text": "Output within conclusions-only cap (~70 lines)",
+          "passed": false,
+          "evidence": "105 lines \u2014 v1.1 arm over-explained here; cap not honored on this run."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.7778,
+        "passed": 7,
+        "failed": 2,
+        "total": 9,
+        "time_seconds": 627.6,
+        "tokens": 92680,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Flags CLAUDE.md @-imports as every-session floor cost",
+          "passed": true,
+          "evidence": "v1 performed full course-correction; 0 flags on re-scan."
+        },
+        {
+          "text": "Splits domain monoliths / trims floor with content preserved",
+          "passed": true,
+          "evidence": "v1 performed full course-correction; 0 flags on re-scan."
+        },
+        {
+          "text": "Creates MODULES.md map",
+          "passed": true,
+          "evidence": "v1 performed full course-correction; 0 flags on re-scan."
+        },
+        {
+          "text": "Installs STATE.md handoff pattern",
+          "passed": true,
+          "evidence": "v1 performed full course-correction; 0 flags on re-scan."
+        },
+        {
+          "text": "Attributes cost to floor + per-turn resend",
+          "passed": true,
+          "evidence": "v1 performed full course-correction; 0 flags on re-scan."
+        },
+        {
+          "text": "No unmeasured savings promise; /context+/cost prescribed",
+          "passed": true,
+          "evidence": "v1 performed full course-correction; 0 flags on re-scan."
+        },
+        {
+          "text": "Post-fix workspace passes mechanical audit (0 flags)",
+          "passed": true,
+          "evidence": "v1 performed full course-correction; 0 flags on re-scan."
+        },
+        {
+          "text": "Delivers workspace TOKEN_LEAK_AUDIT.md per report template",
+          "passed": false,
+          "evidence": "No TOKEN_LEAK_AUDIT.md in icm-ws-B3 \u2014 v1 has no report template."
+        },
+        {
+          "text": "Generates section indexes (make_index.sh) for docs kept whole",
+          "passed": false,
+          "evidence": "No section indexes generated \u2014 v1 has no make_index.sh."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.7778,
+        "passed": 7,
+        "failed": 2,
+        "total": 9,
+        "time_seconds": 205.8,
+        "tokens": 72940,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Correct classification: tech-ops, critical",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~4.3k deliberate load, sliced."
+        },
+        {
+          "text": "Only active domain loaded",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~4.3k deliberate load, sliced."
+        },
+        {
+          "text": "Monolith sliced, not whole",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~4.3k deliberate load, sliced."
+        },
+        {
+          "text": "No PRD/FIRST_PRINCIPLES pulled deliberately",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~4.3k deliberate load, sliced."
+        },
+        {
+          "text": "STATE.md handoff written",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~4.3k deliberate load, sliced."
+        },
+        {
+          "text": "Load report with per-file estimates",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~4.3k deliberate load, sliced."
+        },
+        {
+          "text": "Stops after intake",
+          "passed": true,
+          "evidence": "Summary + STAGE_OUTPUT confirm; ~4.3k deliberate load, sliced."
+        },
+        {
+          "text": "Load report includes session-hygiene /clear line",
+          "passed": false,
+          "evidence": "No hygiene/clear line in load report \u2014 rule didn't exist in v1."
+        },
+        {
+          "text": "Stage output within conclusions-only cap (~70 lines)",
+          "passed": false,
+          "evidence": "103 lines \u2014 no output cap in v1."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.7778,
+        "passed": 7,
+        "failed": 2,
+        "total": 9,
+        "time_seconds": 449.0,
+        "tokens": 88215,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Root AGENTS.md floor identified + quantified",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm; crate map with 96 crates."
+        },
+        {
+          "text": "Findings quantified in bytes/tokens",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm; crate map with 96 crates."
+        },
+        {
+          "text": "Zero modifications to existing files (diff-verified)",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm; crate map with 96 crates."
+        },
+        {
+          "text": "No ICM structure imposed",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm; crate map with 96 crates."
+        },
+        {
+          "text": "Crate/module map delivered",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm; crate map with 96 crates."
+        },
+        {
+          "text": "Measurement prescribed; estimates labeled",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm; crate map with 96 crates."
+        },
+        {
+          "text": "Mandated-read-path leak (177KB README) found",
+          "passed": true,
+          "evidence": "Summary + diff (0 modifications) confirm; crate map with 96 crates."
+        },
+        {
+          "text": "Section index generated for the giant doc instead of reading it",
+          "passed": false,
+          "evidence": "Proposed a README split but read-planned it; no generated index (no make_index.sh in v1)."
+        },
+        {
+          "text": "Session-shape/cache-expiry elevated to a top-ranked finding",
+          "passed": false,
+          "evidence": "Session-shape mentioned in wiring section only (2 expiry references), not ranked as a top finding."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.875,
+        "passed": 7,
+        "failed": 1,
+        "total": 8,
+        "time_seconds": 188.4,
+        "tokens": 55949,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "res.send set point (response.js ~186-191)",
+          "passed": true,
+          "evidence": "Matches ground truth; ~2.7k tokens sliced loads."
+        },
+        {
+          "text": "compileETag + 'etag fn' trigger",
+          "passed": true,
+          "evidence": "Matches ground truth; ~2.7k tokens sliced loads."
+        },
+        {
+          "text": "Default 'weak' (application.js:95)",
+          "passed": true,
+          "evidence": "Matches ground truth; ~2.7k tokens sliced loads."
+        },
+        {
+          "text": "Full condition set",
+          "passed": true,
+          "evidence": "Matches ground truth; ~2.7k tokens sliced loads."
+        },
+        {
+          "text": "sendFile/static delegation (response.js:402)",
+          "passed": true,
+          "evidence": "Matches ground truth; ~2.7k tokens sliced loads."
+        },
+        {
+          "text": "Large files sliced, disclosed",
+          "passed": true,
+          "evidence": "Matches ground truth; ~2.7k tokens sliced loads."
+        },
+        {
+          "text": "Load accounting with totals",
+          "passed": true,
+          "evidence": "Matches ground truth; ~2.7k tokens sliced loads."
+        },
+        {
+          "text": "Output within conclusions-only cap (~70 lines)",
+          "passed": false,
+          "evidence": "84 lines \u2014 no cap in v1."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 156.5,
+        "tokens": 56695,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "run_command + defaults 127.0.0.1:5000 (cli.py:883-884)",
+          "passed": true,
+          "evidence": "Matches ground truth; sliced with citations."
+        },
+        {
+          "text": "FLASK_RUN_* via auto_envvar (cli.py:585)",
+          "passed": true,
+          "evidence": "Matches ground truth; sliced with citations."
+        },
+        {
+          "text": "dotenv chain + precedence",
+          "passed": true,
+          "evidence": "Matches ground truth; sliced with citations."
+        },
+        {
+          "text": "SERVER_NAME only affects Flask.run(); CLI no-op",
+          "passed": true,
+          "evidence": "Matches ground truth; sliced with citations."
+        },
+        {
+          "text": "run_simple handoff (cli.py:983)",
+          "passed": true,
+          "evidence": "Matches ground truth; sliced with citations."
+        },
+        {
+          "text": "Large files sliced, disclosed",
+          "passed": true,
+          "evidence": "Matches ground truth; sliced with citations."
+        },
+        {
+          "text": "Load accounting with totals",
+          "passed": true,
+          "evidence": "Matches ground truth; sliced with citations."
+        },
+        {
+          "text": "Output within conclusions-only cap (~70 lines)",
+          "passed": true,
+          "evidence": "68 lines (incidental \u2014 v1 has no cap rule)."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "new_skill": {
+      "pass_rate": {
+        "mean": 0.975,
+        "stddev": 0.0559,
+        "min": 0.875,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 341.62,
+        "stddev": 287.6698,
+        "min": 106.2,
+        "max": 746.4
+      },
+      "tokens": {
+        "mean": 75516.4,
+        "stddev": 23910.5401,
+        "min": 50255,
+        "max": 101728
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.8417,
+        "stddev": 0.098,
+        "min": 0.7778,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 325.46,
+        "stddev": 205.0623,
+        "min": 156.5,
+        "max": 627.6
+      },
+      "tokens": {
+        "mean": 73295.8,
+        "stddev": 17138.8037,
+        "min": 55949,
+        "max": 92680
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.13",
+      "time_seconds": "+16.2",
+      "tokens": "+2221"
+    }
+  },
+  "notes": []
+}

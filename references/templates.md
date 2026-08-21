@@ -70,6 +70,8 @@ Load report (estimates; /context and /cost have real numbers):
 - 02-analyze/MODULES.md                 0.9 KB  ~230 tok
 - src/load-balancer/health-check.js     3.4 KB  ~850 tok (sliced: lines 40–95 of 210)
 Stage total: ~1.4k tokens loaded (budget 2–8k ✓). Session floor is separate — check /context.
+Session hygiene: stage complete → /clear before the next stage. Pausing >5 min? Close now —
+idle expiry re-bills the whole history at write rates on your next message.
 ```
 
 Over ~8k → add one line: which rule broke, and the fix (e.g., "rule 1: read payments/gateway.js whole; should have sliced ~60 lines").
