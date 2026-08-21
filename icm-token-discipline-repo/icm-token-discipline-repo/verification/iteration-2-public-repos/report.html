@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "icm-token-discipline", "runs": [{"id": "eval-2-codex-audit-with_skill", "prompt": "Real public repo (OpenAI Codex monorepo, ~100 Rust crates + CLI/SDK/docs). Team runs Claude Code here daily; sessions feel expensive. Audit the agent-context setup for token leaks; propose course corrections. No moving/rewriting existing files.", "eval_id": 2, "outputs": [{"name": "AUDIT_REPORT.md", "type": "text", "content": "# Token audit \u2014 Codex monorepo (`/home/claude/repos/codex-A`)\n\nAudit of the repo's agent-context setup for a team running Claude Code here daily, per the ICM token-discipline procedure (mechanical scan \u2192 floor \u2192 monoliths \u2192 map \u2192 session shape). This is a real OSS repo, not an ICM workspace, so ICM structures (stage folders, `domains/`, `incidents/STATE.md`) were **not** imposed; the audit targets what is actually there. No existing project file was moved, rewritten, or deleted. All fixes are drop-in proposals under `proposals/` next to this report.\n\nAll token figures below are **estimates (bytes \u00f7 4) for planning only**. Real numbers come from `/context`, `/cost`, and the Anthropic Console \u2014 the measurement plan in \u00a76 tells the team exactly what to run.\n\n---\n\n## 1. How this repo's sessions get expensive (mechanics in one paragraph)\n\nEvery API call re-sends the entire conversation \u2014 system prompt, tool schemas, the auto-loaded entry file, and every file/tool result ever loaded this session. Caching discounts the old content (~0.1\u00d7 typical) but never makes it free, and everything auto-loaded at session start is re-billed on *every* turn of *every* session. So the bill is driven by: (a) the per-session floor (entry file + MCP schemas + skills metadata + user-level `~/.claude/CLAUDE.md`), (b) how much gets read into a session and how narrowly, and (c) how long conversations run before `/clear`. The findings below map exactly onto those three.\n\n---\n\n## 2. Findings\n\n### F1 \u2014 The entry file is a 5.6k-token flat monolith, billed to every session (highest priority)\n\n`/home/claude/repos/codex-A/AGENTS.md`: **322 lines, 22,519 bytes \u2248 5,630 tokens**, auto-loaded into every session (Claude Code reads `AGENTS.md` natively in current versions; if your version predates that, you have symlinked or copied it \u2014 either way it is in the floor. Verify with `/context` in a fresh session: the memory-files line should list it).\n\nMeasured section breakdown (bytes \u00f7 4):\n\n| Section (current AGENTS.md) | Lines | ~Tokens | Needed by |\n|---|---|---|---|\n| Rust conventions + sandbox rules + fmt/test workflow | 1\u201371 | ~2,033 | Rust sessions only |\n| `codex-core` policy | 72\u201384 | ~220 | Rust sessions only |\n| Code Review Rules (5 subsections) | 85\u2013132 | ~497 | Review sessions only \u2014 **duplicated in skills, see F2** |\n| TUI conventions + styling + text wrapping | 133\u2013164 | ~626 | `codex-rs/tui` sessions only |\n| Tests (org, snapshots, benches, assertions, integration harnesses) | 165\u2013259 | ~1,163 | Test-writing sessions only |\n| App-server API best practices | 260\u2013307 | ~920 | app-server protocol sessions only |\n| Python + platform support | 308\u2013322 | ~161 | small, near-universal |\n\nA docs fix in `codex-cli/`, an SDK change in `sdk/`, a CI tweak in `.github/` \u2014 every one of these sessions pays ~5.6k tokens up front and ~10% of it again on each subsequent turn for ratatui styling rules and serde annotation policy it will never use. The file is even titled \"Rust/codex-rs\": it is subtree content sitting at the root.\n\n### F2 \u2014 Review rules are double-shipped: verbatim in AGENTS.md *and* as on-demand skills\n\nFour of the five \"Code Review Rules\" subsections exist nearly word-for-word as skills that already load on demand:\n\n| AGENTS.md section | Duplicate skill file |\n|---|---|\n| Model visible context (lines 91\u2013101) | `.codex/skills/code-review-context/SKILL.md` (verbatim) |\n| Breaking changes (102\u2013111) | `.codex/skills/code-review-breaking-changes/SKILL.md` |\n| Test authoring guidance (112\u2013124) | `.codex/skills/code-review-testing/SKILL.md` (verbatim) |\n| Change size guidance (125\u2013132) | `.codex/skills/code-review-change-size/SKILL.md` (verbatim) |\n\nThe skill copies are the *right* mechanism (loaded only when a review runs, orchestrated by `.codex/skills/code-review/SKILL.md`); the AGENTS.md copies are the always-billed redundant ones. Worse for drift: the two copies have already diverged slightly (the AGENTS.md \"Breaking changes\" list includes `rawResponseItem/*` events; the skill copy does not).\n\n### F3 \u2014 The Codex skills are invisible to Claude Code, so the on-demand mechanism half-works\n\nSkills live only in `.codex/skills/` (Codex's location) and AGENTS.md references them with Codex syntax (`$remote-tests`, `$path-types`, line 228/257/322). Claude Code discovers skills in `.claude/skills/`. Today a Claude Code session either misses this guidance entirely or, following the `$remote-tests` pointer, greps around for it. There is no `.claude/` directory and no project `.mcp.json` in the repo at all \u2014 the repo currently gives Claude Code nothing except the 22.5KB entry file.\n\n### F4 \u2014 A 177KB README sits directly on a mandated read path\n\n`codex-rs/app-server/README.md` is **177,395 bytes \u2248 44,000 tokens** \u2014 roughly a fifth of a 200k context window in one file. AGENTS.md *requires* touching it for app-server work (\"Update app-server docs/examples when API behavior changes (at minimum `app-server/README.md`)\"). One naive whole-file Read turns an ordinary session into a very expensive one, and per the resend mechanics that 44k is then re-billed (cache-discounted) on every remaining turn. The file has a Table of Contents (lines 5\u201319) and 88 headings \u2014 it is perfectly sliceable; nothing in the repo says to slice it.\n\n### F5 \u2014 A belt of 20\u201351KB product-asset markdown invites accidental whole-reads\n\nThese are runtime assets (model prompts, memory templates, sample skills), not agent docs \u2014 but they sit where an agent investigating \"prompts\" or \"memories\" will find them, and nothing warns about their size:\n\n- `codex-rs/memories/write/templates/memories/consolidation.md` \u2014 51,237 B (~12.8k tok)\n- `codex-rs/memories/write/templates/memories/stage_one_system.md` \u2014 30,449 B (~7.6k tok)\n- `codex-rs/core/gpt_5_1_prompt.md` \u2014 24,204 B; `prompt_with_apply_patch_instructions.md` \u2014 23,988 B; `gpt_5_2_prompt.md` \u2014 21,652 B\n- `codex-rs/protocol/src/prompts/base_instructions/default.md` \u2014 20,903 B; `codex-rs/models-manager/prompt.md` \u2014 20,903 B\n- `codex-rs/skills/src/assets/samples/\u2026` \u2014 23,093 B and 19,201 B samples\n\nThese should never be split (they ship with the product); they need a standing read rule: size-check first, grep for the section, read the slice.\n\n### F6 \u2014 102 crates and no map: navigation is paid for with exploration transcripts\n\n`codex-rs/` holds ~100 workspace crates (96 with a `Cargo.toml` at the top level of their dir). There is no index; \"which crate owns X?\" is answered today by `ls`-walks, README opens, and speculative greps, whose full transcripts then ride in the session for every later turn. Almost none of the crates' `Cargo.toml`s even carry a `description` field, so there is nothing cheap for an agent to query.\n\n### F7 \u2014 The nested-context pattern exists in embryo and proves the fix works here\n\n`codex-rs/tui/src/bottom_pane/AGENTS.md` (564 B) is exactly the right shape: folder-scoped guidance, loaded only when working there. The repo already believes in this pattern; the root file just never adopted it. (`codex-rs/tui/styles.md`, 1,213 B, referenced rather than inlined, is a second good precedent.)\n\n### F8 \u2014 Floor contributors outside the repo (cannot be audited from here \u2014 team must check)\n\n- No project `.mcp.json` exists, so any MCP servers in your sessions come from user/global config and ride into this repo's floor. Run `claude mcp list` and `/context`; remove servers this repo's work never calls, or scope them per-project.\n- `~/.claude/CLAUDE.md` (user-level) loads into every session in every repo. Keep it a few lines.\n- `.github/codex/**` (label prompts, ~7KB total) is cloud-automation config, not session context \u2014 no action.\n\n### F9 \u2014 Session shape and plan are where the residual bill lives\n\nEven with a lean floor, cost per turn grows with conversation length: a session that explores, implements, reviews, and fixes CI in one continuous chat re-bills its whole history (cache-discounted) every turn. And if the team is on metered API billing, steady daily use is exactly the profile where a subscription plan can beat per-token pricing. Neither is a file fix; both go in the working agreement (\u00a75) and the measurement plan (\u00a76).\n\n---\n\n## 3. Proposed fixes (drop-in files under `proposals/`)\n\nLayered context: a tiny always-loaded root, subtree files that load only where relevant, task files that load only when needed. **Nothing is deleted \u2014 every line of the current AGENTS.md lands in exactly one new home.** Adoption is: copy each proposal to its target path, strip the `<!-- PROPOSAL -->` header, replace root `AGENTS.md` last, in one PR.\n\n| Proposal file | Target path in repo | ~Size on adoption | Loads |\n|---|---|---|---|\n| `proposals/AGENTS.root.proposed.md` | `/AGENTS.md` (replaces 22.5KB file) | ~2.4 KB \u2248 **600 tok** | every session |\n| `proposals/AGENTS.codex-rs.proposed.md` | `/codex-rs/AGENTS.md` (new) | ~3.1 KB \u2248 780 tok | Rust work only |\n| `proposals/TESTING.codex-rs.proposed.md` | `/codex-rs/TESTING.md` (new) | ~3.3 KB \u2248 830 tok | writing tests only |\n| `proposals/AGENTS.tui.proposed.md` | `/codex-rs/tui/AGENTS.md` (new) | ~1.4 KB \u2248 350 tok | TUI work only |\n| `proposals/AGENTS.app-server.proposed.md` | `/codex-rs/app-server/AGENTS.md` (new) | ~2.6 KB \u2248 650 tok | app-server work only |\n| `proposals/CRATE_MAP.proposed.md` | `/codex-rs/CRATE_MAP.md` (new) | ~5.3 KB \u2248 1,330 tok | on demand, instead of globbing |\n\nSpecific fixes, mapped to findings:\n\n1. **F1 \u2192 lean root.** The proposed root keeps only: repo layout, the sandbox env-var hard rule, cross-platform + Python-3 rules, the `just fmt`/`just test`/`just fix`/`bazel-lock-update` workflow, a read-when-needed routing table, and a standing \"never whole-read big markdown\" rule (fixes F5 globally). Everything else moves down a layer.\n2. **F2 \u2192 single source of truth for review rules.** Drop the four duplicated subsections from the entry file; the routing table says \"Reviewing a PR \u2192 invoke the `code-review` skill\". Reconcile the one divergence first (put `rawResponseItem/*` back into `code-review-breaking-changes/SKILL.md` so no rule is lost). The remaining one-liner (\"Crate API surface\") moved into `codex-rs/AGENTS.md`.\n3. **F3 \u2192 make the skills reachable from Claude Code.** Symlink them once: `mkdir -p .claude && ln -s ../.codex/skills .claude/skills` (or per-skill links if you prefer curation). Skill *metadata* is small and bodies load on invocation, so this adds little floor and buys on-demand loading of `remote-tests`, `code-review-*`, `babysit-pr`, etc. The proposed files reference skills by path, which works in both tools.\n4. **F4 \u2192 README slicing rule at the point of use.** `proposals/AGENTS.app-server.proposed.md` opens with: never read `app-server/README.md` whole; read the ToC (lines 5\u201319), grep the heading, read the slice. The README itself is published API documentation \u2014 deliberately **not** split by this audit; if the team wants it chapterized into `app-server/docs/`, that is a product-docs decision to make separately.\n5. **F5 \u2192 the root hard rule** (\"size-check, grep, slice \u2014 big .md files here are product assets\") plus the same warning at the app-server point of use.\n6. **F6 \u2192 `CRATE_MAP.md`.** Generated mechanically (dir, crate name, LoC from `src/**/*.rs`, purpose column from `Cargo.toml` descriptions \u2014 mostly empty today). One line per crate; the routing table points \"finding the right crate\" at it. Fill the purpose column incrementally as crates get touched, or with one cheap-model batch pass; it stays useful even half-filled because names + LoC already answer most \"where/how big\" questions. Keep it out of the auto-loaded root \u2014 it is a read-on-demand file.\n7. **F7 \u2192 keep doing it.** `bottom_pane/AGENTS.md` stays exactly as is; new folder-specific guidance should follow that pattern, not grow the root.\n\n### What was deliberately *not* proposed\n\nNo `domains/`, no stage folders, no `incidents/STATE.md`, no `MODULES.md`-per-stage \u2014 those are ICM-workspace structures and this is a product repo; forcing them would add hops without savings. No splitting of product-asset markdown (F5) or the app-server README (F4) \u2014 read discipline beats file surgery on files that ship. No sharding of anything under ~2 KB.\n\n---\n\n## 4. Expected impact (estimates \u2014 verify per \u00a76 before quoting)\n\n**Floor per session** (entry-file contribution only, bytes \u00f7 4):\n\n| Session type | Today | After | \u0394 at session start |\n|---|---|---|---|\n| docs / CLI / SDK / CI | ~5,630 tok | ~600 tok | **\u221289%** |\n| typical Rust crate work | ~5,630 | ~600 + 780 = ~1,380 | **\u221275%** (and the nested part loads only when the subtree is touched, i.e. later and cheaper) |\n| TUI work incl. tests | ~5,630 | ~2,560 | \u221255% |\n| app-server protocol work | ~5,630 | ~2,860 | \u221249% |\n\n**Billed effect compounds per turn.** With per-turn resend at ~0.1\u00d7 cache-read after a ~1.25\u00d7 first write, trimming \u0394 tokens from the floor saves roughly `\u0394 \u00d7 (1.25 + 0.1 \u00d7 (turns \u2212 1))` input-token-equivalents per session. Illustrative shape only: \u0394 = 5,000 tok (docs/CLI case) over a 25-turn session \u2248 ~18k equivalents saved per session; at 10 devs \u00d7 5 sessions/day \u2248 ~900k/day \u2014 before counting F4 (a single avoided whole-read of the app-server README is ~44k tokens that would otherwise also re-bill every remaining turn) or F6 (each avoided exploration transcript is typically 1\u201310k). These are planning numbers, not promises; the only claimable numbers come from \u00a76.\n\nTwo second-order effects, same direction: a small stable prompt prefix caches better across a team's sessions, and a routing table that names the one right file shortens the exploratory turns at the start of every task.\n\n---\n\n## 5. Working agreement (behavioral half \u2014 no files to change)\n\n1. **One task, one session.** `/clear` between unrelated tasks; never run explore \u2192 implement \u2192 review \u2192 CI-fix as one continuous chat. Ending a session is the only way to stop paying for its history.\n2. **Delegate broad searches to subagents.** \"Which crates touch retry logic?\" should return a 10-line answer to the main session, not a 10k-token grep transcript. Subagent tokens still bill \u2014 the win is the short summary replacing a long transcript in every later turn.\n3. **Measure before reading.** `wc -c` first; over ~8 KB, grep for the section and read with offset/limit. Applies doubly to everything in F4/F5.\n4. **Never re-read** a file already in context this session; reference it.\n5. **Keep outputs terse.** Output tokens price at a large multiple of input; don't restate file contents back into the chat.\n6. **Model per task type.** Mechanical chores (snapshot accepts, lockfile updates, fmt-only PRs) on the cheapest tier via `/model`; design/review on a mid tier. If you are *already* on cheap models and still expensive, the cause is volume \u00d7 floor \u00d7 session length \u2014 the fixes above, not further downgrades.\n7. **Check the plan.** If this is metered API billing at steady daily volume, compare against Pro/Max subscription pricing (anthropic.com/pricing + Console usage page). For sustained daily use this administrative change can outweigh every prompt-level fix combined.\n\n---\n\n## 6. Measurement plan for the team (run these; the audit sandbox cannot)\n\n**Baseline, before merging anything:**\n1. Fresh Claude Code session at repo root \u2192 `/context` \u2192 record total floor and the breakdown (system prompt, tools, MCP, skills, memory files \u2014 confirm `AGENTS.md` appears and its size).\n2. Run one typical task to completion \u2192 `/cost` \u2192 record. Note turns used.\n3. `claude mcp list` \u2192 record servers; Console usage page \u2192 record a normal day's totals per model and cache-hit rate. Keep all of it in the PR description or a `_audit/BASELINE.md` you delete later.\n\n**After merging the proposals:**\n4. Repeat 1\u20132 on a comparable task (same area, similar size). The `/context` floor delta should match \u00a74's first table within rounding; the `/cost` delta is the number you are allowed to quote.\n5. Spot-check lazy loading: fresh session, edit a file under `codex-rs/tui/`, `/context` again \u2014 the tui/`codex-rs` AGENTS.md files should appear only in that session, not in a docs session.\n6. If `/cost` barely moves: the residue is session shape (\u00a75.1 \u2014 check how long conversations actually run) or MCP/user-level floor (F8), in that order.\n\n---\n\n## 7. Files I read\n\nWorkspace/repo files (full reads unless noted):\n\n- `/home/claude/repos/codex-A/AGENTS.md`\n- `/home/claude/repos/codex-A/codex-rs/tui/src/bottom_pane/AGENTS.md`\n- `/home/claude/repos/codex-A/.codex/skills/code-review/SKILL.md`\n- `/home/claude/repos/codex-A/.codex/skills/code-review-change-size/SKILL.md`\n- `/home/claude/repos/codex-A/.codex/skills/code-review-breaking-changes/SKILL.md`\n- `/home/claude/repos/codex-A/.codex/skills/code-review-context/SKILL.md`\n- `/home/claude/repos/codex-A/.codex/skills/code-review-testing/SKILL.md`\n- `/home/claude/repos/codex-A/.codex/skills/remote-tests/SKILL.md`\n- `/home/claude/repos/codex-A/docs/agents_md.md`\n- `/home/claude/repos/codex-A/docs/skills.md`\n- `/home/claude/repos/codex-A/codex-rs/app-server/README.md` \u2014 **headings only** via grep (never read whole, per the discipline this report recommends)\n- `codex-rs/*/Cargo.toml` \u2014 `name`/`description` lines only, via script, to generate the crate map\n- Everything else cited (sizes, line counts, section boundaries, file listings) came from shell scans (`icm_audit.sh`, `find`/`wc`/`du`/`awk`), not file reads.\n\nSkill files (listed separately): `/home/claude/icm-token-discipline/SKILL.md`, `references/audit.md`, `references/mechanics.md`; `scripts/icm_audit.sh` was executed, not read.\n"}], "grading": {"expectations": [{"text": "Identifies root AGENTS.md as per-session floor cost with measured size", "passed": true, "evidence": "22.5 KB / ~5.6k tokens auto-loaded every session; noted ~80% is subtree/task-specific."}, {"text": "Findings quantified in real bytes/tokens, not vibes", "passed": true, "evidence": "Byte/token figures throughout (22.5KB AGENTS.md, 177KB app-server README, 20-51KB prompt-doc belt); floor cut estimated -49% to -89% by session type."}, {"text": "Zero modifications to existing project files (verified by diff vs pristine clone)", "passed": true, "evidence": "diff -rq vs pristine clone: no changes, no additions inside the repo \u2014 all 6 proposal files kept outside in outputs/proposals/."}, {"text": "No foreign ICM structure imposed on the real repo", "passed": true, "evidence": "Report states stage folders/domains/STATE.md were not imposed; audit targets what exists. Confirmed no such files added."}, {"text": "Delivers a crate/module map to cut exploration-transcript costs", "passed": true, "evidence": "Script-generated CRATE_MAP.md proposal covering the ~102-crate workspace."}, {"text": "Prescribes /context + /cost measurement; estimates labeled as estimates", "passed": true, "evidence": "Measurement plan for the team; 'all numbers are labeled estimates pending that measurement'."}, {"text": "Finds leaks beyond static files (mandated read paths / transcript noise)", "passed": true, "evidence": "Caught 177KB README sitting on a mandated read path with no slicing rule; skills duplication invisible to Claude Code."}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}}}, {"id": "eval-2-codex-audit-without_skill", "prompt": "Real public repo (OpenAI Codex monorepo, ~100 Rust crates + CLI/SDK/docs). Team runs Claude Code here daily; sessions feel expensive. Audit the agent-context setup for token leaks; propose course corrections. No moving/rewriting existing files.", "eval_id": 2, "outputs": [{"name": "AUDIT_REPORT.md", "type": "text", "content": "# Agent-Context Token Audit \u2014 openai/codex monorepo (`/home/claude/repos/codex-B`)\n\nDate: 2026-08-21\nScope: repo-level agent-context setup as seen by Claude Code sessions (the team's daily driver), with Codex-compat kept intact. Token figures use the ~4 bytes/token heuristic for prose/code and are labeled as estimates. No existing repo file was moved, rewritten, or deleted; all proposed replacements were added as clearly-marked files under `/home/claude/repos/codex-B/proposals-agent-context-audit/`.\n\n---\n\n## 1. Executive summary\n\nThe repo's always-loaded agent context is a single 22.5 KB root `AGENTS.md` (~5.5k tokens est.) \u2014 and roughly 57% of it is guidance scoped to one subsystem (TUI, app-server, codex-core, code review) that gets paid in **every** session regardless of what the session touches. But the memory file is not the biggest leak. The larger recurring costs are transcript-side:\n\n1. The mandated test workflow streams full per-test output into the transcript \u2014 `just test -p codex-tui` prints ~700 per-test PASS lines per green run (est. 3\u20135k tokens/run, several runs/session), because the repo's nextest profiles have no quiet/failures-only mode.\n2. There are no guardrails against catastrophic single reads: `MODULE.bazel.lock` (1.5 MB), `codex-rs/Cargo.lock` (372 KB), `app-server-protocol/schema/` (6.8 MB of generated fixtures), `models-manager/models.json` (416 KB), and source files up to ~13,000 lines (`chat_composer.rs`). One naive full-file read costs an estimated 20\u2013100k tokens.\n3. `AGENTS.md` references a `$remote-tests` skill three times that only exists as a Codex skill (`.codex/skills/remote-tests/`) \u2014 Claude Code cannot resolve it, so sessions either burn discovery tokens hunting for it or miss the guidance.\n4. The \"Code Review Rules\" section of `AGENTS.md` (~2 KB, ~500 tokens est.) duplicates, nearly verbatim, four existing `.codex/skills/code-review-*` skills \u2014 always-on payment for on-demand content that already exists elsewhere.\n\nProposed fixes (all delivered as proposal files, none applied): a slim root `AGENTS.md` (22.5 KB \u2192 ~5.9 KB, ~75% cut in always-loaded memory), three nested `AGENTS.md` files that load only in their subtrees, a nextest `agent` profile + `test-quiet` recipe (est. 70\u201390% cut in test-output tokens on green runs), a `.claude/settings.json` Read deny-list for generated/lock files, a thin Claude-side mirror of the `remote-tests` skill, and an on-demand module map for the ~100-crate workspace. Estimated combined effect for a typical codex-rs session: **~3\u20134k tokens/turn less baseline context and roughly 10\u201330k fewer transcript tokens per test-heavy session**, plus elimination of episodic 20\u2013100k-token big-read incidents. A measurement protocol for the team (using `/context` and `/cost`, which were unavailable to this audit environment) is in \u00a76.\n\n---\n\n## 2. Inventory \u2014 what actually loads today\n\nClaude Code (current versions) picks up `AGENTS.md` files natively the same way as `CLAUDE.md`: the repo-root file loads at session start; nested ones load when files in their subtree are touched. Verify on your installed version with `/context` (\u00a76.1).\n\n### 2.1 Always loaded (every session started at repo root)\n\n| File | Size | Est. tokens | Notes |\n| --- | --- | --- | --- |\n| `AGENTS.md` (root) | 22,519 B / 3,138 words | ~5.5k | The only always-on repo context. Breakdown in \u00a73.1. |\n\nThat is the entire repo-level baseline \u2014 there is **no** `CLAUDE.md`, no `.claude/` directory (no settings, skills, commands, agents, hooks), no `.mcp.json`, and no other assistant config (`.cursorrules`, `.windsurfrules`, `copilot-instructions.md`, `GEMINI.md` \u2014 all absent). This is genuinely lean plumbing; the problems are content-shape, not sprawl.\n\n### 2.2 Conditionally loaded\n\n| File | Size | When |\n| --- | --- | --- |\n| `codex-rs/tui/src/bottom_pane/AGENTS.md` | 564 B (~140 tok) | Only when working under `bottom_pane/`. Well-scoped \u2014 this is the pattern the root file should follow. |\n\n### 2.3 Present but NOT loaded by Claude Code (relevant context anyway)\n\n- `.codex/skills/` \u2014 11 Codex-format skills (~33 KB of SKILL.md bodies + references/scripts): `babysit-pr` (16.9 KB), `codex-pr-body`, `path-types`, `remote-tests`, `test-tui`, `update-v8-version`, `code-review` + 4 `code-review-*` sub-skills. Zero token cost to Claude sessions, but also invisible \u2014 see finding F3.\n- `.codex/environments/environment.toml`, `.github/codex/` (bot label prompts, `home/config.toml`) \u2014 Codex cloud/CI config; not loaded interactively. Fine.\n- `docs/*.md` \u2014 mostly thin redirect stubs to hosted docs (`docs/config.md` is 15 lines; `codex-rs/config.md` is a 6-line moved-notice). Good: no giant local doc for agents to slurp.\n\n### 2.4 Read hazards (loaded only if an agent reads them \u2014 and agents do)\n\n| Path | Size | Est. cost if read |\n| --- | --- | --- |\n| `MODULE.bazel.lock` | 1.5 MB | capped only by Read's 2000-line default; multi-10k tokens per read |\n| `codex-rs/app-server-protocol/schema/` | 6.8 MB total (largest JSON 620 KB) | 20\u2013150k per file read |\n| `codex-rs/Cargo.lock` | 372 KB | ~90k if fully read |\n| `codex-rs/models-manager/models.json` | 416 KB | ~100k |\n| `pnpm-lock.yaml` | 180 KB | ~45k |\n| `codex-rs/tui/src/bottom_pane/chat_composer.rs` | 492 KB / 12,859 lines | a single default 2000-line Read \u2248 20\u201330k |\n| `codex-rs/tui/src/app/tests.rs` | 296 KB / 8,370 lines | same class |\n| `codex-rs/app-server/src/request_processors/thread_processor.rs` | 228 KB / 5,971 lines | same class |\n| `codex-rs/protocol/src/protocol.rs` | 212 KB / 6,030 lines | same class |\n| `sdk/python/src/openai_codex/generated/` | >200 KB files | generated; never worth reading whole |\n| `codex-rs/**/*.snap` | 741 files / 3.0 MB (687 in tui) | individually small (~4 KB avg) \u2014 fine to read singly, dangerous to bulk-read |\n\n---\n\n## 3. Findings, ranked by expected impact\n\n### F1 (highest recurring cost): mandated test/format loops stream verbose output into every session\n\nEvidence:\n- `AGENTS.md` lines 64\u201370 mandate `just fmt` after every change plus `just test -p <crate>` (and full `just test` when common/core/protocol changed).\n- `justfile` `test` recipe: `NEXTEST_PROFILE=local cargo nextest run --no-fail-fast` \u2014 and `codex-rs/.config/nextest.toml` defines `default`/`local` profiles with **no** `status-level`/`final-status-level` settings, so nextest's default prints one line per test.\n- `codex-rs/tui` alone has 687 snapshot tests; a green `just test -p codex-tui` run emits ~700 PASS lines plus cargo build chatter \u2014 est. 3\u20135k tokens per run, and edit\u2192test loops run this several times per session. Full-suite runs are far larger.\n\nCost: est. 10\u201330k+ tokens per test-heavy session, every session, forever. This is almost certainly the team's single largest recurring leak.\n\nFix (proposed, `nextest-agent-profile.proposed.toml`): add a `[profile.agent]` (inherits `local`, `status-level = \"fail\"`, `final-status-level = \"flaky\"`, `failure-output = \"immediate-final\"`) plus a `just test-quiet` recipe (the existing recipe hardcodes `NEXTEST_PROFILE=local`, so an env var alone won't do it), and point the AGENTS.md test instructions at `test-quiet` for routine agent runs. Failures still print in full \u2014 debugging is unaffected; green runs shrink to a summary line (est. 70\u201390% reduction of test-output tokens).\n\n### F2 (highest per-incident cost): no guardrails on catastrophic reads\n\nEvidence: table in \u00a72.4. Nothing prevents a session from Reading `Cargo.lock` while \"checking a dependency version,\" paging through `chat_composer.rs`, or opening a 620 KB schema fixture. `AGENTS.md` line 37\u201339 even directs attention to `Cargo.toml`/`Cargo.lock`/`MODULE.bazel.lock` maintenance, making lockfile reads likely.\n\nCost: episodic, 20\u2013100k tokens per incident; one incident can double a session's cost and trigger early auto-compaction (which itself costs a summarization pass and loses working context).\n\nFix (proposed, `claude-settings.proposed.json` \u2192 `.claude/settings.json`): deny the `Read` tool on lockfiles, `app-server-protocol/schema/**`, `models.json`, generated SDK code, `third_party/**`, `node_modules/**`, `target/**`. Grep still works on denied paths for targeted queries, and `git diff --stat` covers regenerated-fixture review. Deliberately **not** denied: `*.snap`/`*.snap.new`, because the snapshot workflow in AGENTS.md requires reading them (they average ~4 KB \u2014 cheap singly). The slim-root proposal additionally adds one orientation line (\"grep before reading; several files exceed 5,000 lines\") and the tui/app-server nested files name their local monster files.\n\n### F3: `$remote-tests` skill references are dangling for Claude Code\n\nEvidence: `AGENTS.md` lines 228, 257, 322 say \"See `$remote-tests` for details\" / \"See the `$remote-tests` skill\". The skill exists only at `.codex/skills/remote-tests/SKILL.md` (Codex skill layout). Claude Code loads skills from `.claude/skills/` \u2014 there is no `.claude/` directory, so the reference resolves to nothing.\n\nCost: when triggered, est. 1\u20133k tokens of hunting per occurrence; worse, silent misses produce integration tests that don't follow the auto-env conventions, costing review/rework cycles (unquantified but real \u2014 the rule exists because CI runs foreign app/exec OS matrices).\n\nFix (proposed, `claude-skill-remote-tests.proposed.md` \u2192 `.claude/skills/remote-tests/SKILL.md`): a thin mirror whose body just says \"read `.codex/skills/remote-tests/SKILL.md` and follow it\" \u2014 single source of truth stays in `.codex/`, Claude pays only ~50 tokens of frontmatter at session start. Same pattern is worth considering for `test-tui` and `path-types` only; do **not** mirror all 11 skills (each mirror's description is always-on cost; `babysit-pr` and the PR-body/review orchestration skills are Codex-workflow-specific).\n\nCheaper alternative if the team prefers zero new files: change the three `$remote-tests` mentions to include the file path (the slim-root and nested proposals already write them as \"`$remote-tests` skill (`.codex/skills/remote-tests/SKILL.md`)\", which keeps Codex's `$` syntax working and gives Claude a resolvable path).\n\n### F4: ~57% of the always-loaded root `AGENTS.md` is subsystem-scoped\n\nMeasured section breakdown of the 22,519-byte file:\n\n| Section (lines) | Bytes | Est. tokens | Actual audience |\n| --- | --- | --- | --- |\n| General Rust rules + workflow (1\u201371) | 8,132 | ~2.0k | everyone \u2014 keep at root |\n| codex-core push-back (72\u201384) | 882 | ~220 | core work \u2192 `codex-rs/core/` |\n| Code Review Rules (85\u2013132) | 1,997 | ~500 | review time only \u2014 already duplicated in skills (F5) |\n| TUI conventions (133\u2013164) | 2,511 | ~630 | `codex-rs/tui/` only |\n| Tests (165\u2013259) | 4,659 | ~1.15k | mixed: ~1.6 KB general; snapshot part is TUI-only, integration parts are core/app-server-only |\n| App-server API practices (260\u2013307) | 3,688 | ~920 | `codex-rs/app-server*/` only |\n| Python (308\u2013316) | 347 | ~85 | keep (tiny) |\n| Platform support (317\u2013323) | 303 | ~75 | keep (tiny) |\n\nA session fixing, say, `codex-rs/login` pays ~3.4k tokens (est.) for TUI styling, app-server serde rules, snapshot workflow, and review rules it will never use \u2014 every turn, at cache-read prices after turn 1, at full price on cache-miss turns, and it fills the 200k window sooner (earlier auto-compaction). Both Codex and Claude Code merge nested `AGENTS.md` files for the subtree being edited, so pushing scoped content down is free for correctness and saves everyone \u2014 Codex sessions included.\n\nFix (proposed): `AGENTS-root.proposed.md` (5,915 B \u2248 1.4k tokens \u2014 a 75% cut) keeps every general rule (compressed narration, zero dropped rules) plus a \"Scoped guidance\" pointer block; `tui-AGENTS.proposed.md` \u2192 `codex-rs/tui/AGENTS.md` (~750 tok), `app-server-AGENTS.proposed.md` \u2192 `codex-rs/app-server/AGENTS.md` (~900 tok, with one-line pointer files for `app-server-protocol/`), `core-AGENTS.proposed.md` \u2192 `codex-rs/core/AGENTS.md` (~680 tok). Resulting always-on load: ~1.4k everywhere; ~2.0\u20132.3k when actually working in tui/app-server/core. Note: a session that touches tui *and* app-server pays both nested files \u2014 still below today's 5.5k.\n\n### F5: Code Review Rules are stored twice \u2014 the always-on copy is pure duplication\n\nEvidence: `AGENTS.md` lines 85\u2013131 (\"Crate API surface\", \"Model visible context\", \"Breaking changes\", \"Test authoring guidance\", \"Change size guidance (800 lines)\") match `.codex/skills/code-review-context/SKILL.md`, `code-review-breaking-changes/SKILL.md`, `code-review-change-size/SKILL.md`, `code-review-testing/SKILL.md` nearly verbatim (the skills are invoked by the `code-review` orchestrator skill). Two sources of truth that will drift, and ~500 tokens (est.) paid in every session for review-time content.\n\nFix: when slimming the root file, drop this section and keep the skills canonical (the slim-root proposal does this; the \"model visible context\" invariants also appear, correctly scoped, in the proposed `core/AGENTS.md` since they bind code changes there, not just reviews). Irony worth naming in the PR that applies this: these very rules mandate bounded, non-redundant model-visible context for Codex's runtime \u2014 the repo's own agent memory should meet the same bar.\n\n### F6: no orientation map for a ~100-crate workspace\n\nEvidence: `codex-rs/` contains ~100 crate directories; `codex-rs/README.md` is 3 lines (a link to hosted docs); no module map exists anywhere in-repo.\n\nCost: new-to-an-area sessions spend est. 2\u201310k tokens on `ls`/`glob`/`grep` archaeology re-deriving the same layout, every time.\n\nFix (proposed, `module-map.proposed.md` \u2192 `codex-rs/docs/module-map.md`): a grouped, one-line-per-area map (~4.2 KB \u2248 1k tokens) referenced **by path** from the slim root \u2014 read on demand, never inlined. Maintainers should skim it for mischaracterizations before adopting (it was generated from layout + AGENTS.md statements, not from reading every crate).\n\n### F7 (hygiene/anti-regression): keep the single-entry-file property, and check user-level config\n\n- Do **not** add a `CLAUDE.md` that `@`-imports `AGENTS.md` on a Claude Code version that already reads `AGENTS.md` natively \u2014 that double-loads ~5.5k tokens. Verify native pickup with `/context` (\u00a76.1); only if your version does *not* show AGENTS.md as memory, add a one-line `CLAUDE.md` containing exactly `@AGENTS.md`.\n- Keep the repo `.mcp.json`-free unless a server pays rent: every MCP server's tool schemas load into every session (commonly 5\u201320k tokens for large servers) \u2014 that would instantly dwarf everything else in this audit.\n- This audit covers the repo. Per-developer leaks live outside it: `~/.claude/CLAUDE.md`, user-level MCP servers, and enabled plugins all load every session. Have each teammate run `/context` once and look at the MCP-tools and user-memory lines.\n- Minor accuracy note: `AGENTS.md` lines 8\u201310 tell the agent \"You operate in a sandbox where `CODEX_SANDBOX_NETWORK_DISABLED=1` will be set...\" \u2014 true for Codex cloud, false for local Claude Code sessions. The slim-root proposal keeps the (important) don't-touch rule and drops the sandbox narration.\n\n### Non-findings \u2014 things that are already right (do not \"fix\")\n\n- `codex-rs/tui/src/bottom_pane/AGENTS.md`: small, scoped, load-on-demand. The model the proposals generalize.\n- `codex-rs/tui/styles.md` referenced by path from AGENTS.md rather than inlined.\n- `docs/` and `codex-rs/config.md` as redirect stubs \u2014 no multi-thousand-token local reference docs to accidentally slurp.\n- No repo-level MCP servers, hooks, commands, or skill sprawl for Claude; `.github/codex/` bot prompts stay out of interactive sessions.\n- `.codex/skills` bodies are on-demand for Codex (only ~50-token frontmatter each at Codex session start) \u2014 the skills mechanism is being used correctly; the gap is only Claude-side visibility (F3).\n\n---\n\n## 4. Proposed changes (all delivered as new, clearly-marked files; nothing applied)\n\nLocation: `/home/claude/repos/codex-B/proposals-agent-context-audit/` (see its `README.md` for apply order \u2014 guardrails first, root-slimming last since it touches an upstream-shared file).\n\n| # | Proposal file | Would become | Addresses |\n| --- | --- | --- | --- |\n| 1 | `nextest-agent-profile.proposed.toml` | append to `codex-rs/.config/nextest.toml` + `test-quiet` justfile recipe | F1 |\n| 2 | `claude-settings.proposed.json` | `.claude/settings.json` | F2 |\n| 3 | `claude-skill-remote-tests.proposed.md` | `.claude/skills/remote-tests/SKILL.md` | F3 |\n| 4 | `AGENTS-root.proposed.md` | root `AGENTS.md` (5,915 B vs 22,519 B) | F4, F5, F7 |\n| 5 | `tui-AGENTS.proposed.md` | `codex-rs/tui/AGENTS.md` | F4 |\n| 6 | `app-server-AGENTS.proposed.md` | `codex-rs/app-server/AGENTS.md` (+ pointer stub in `app-server-protocol/`) | F4 |\n| 7 | `core-AGENTS.proposed.md` | `codex-rs/core/AGENTS.md` | F4, F5 |\n| 8 | `module-map.proposed.md` | `codex-rs/docs/module-map.md` | F6 |\n\nCompatibility note: every proposal is Codex-compatible (nested AGENTS.md is native Codex behavior; `.claude/` and nextest profiles are inert for Codex; the `$remote-tests` mentions keep Codex's `$` skill syntax alongside a plain path). Items 4\u20137 modify guidance shared with upstream contributors and Codex cloud runs \u2014 route them through the maintainers who own `AGENTS.md`.\n\n## 5. Expected impact (estimates, to be validated with \u00a76)\n\nPer-session, typical codex-rs work, ~40-turn session:\n\n| Lever | Today (est.) | After (est.) | Saving |\n| --- | --- | --- | --- |\n| Always-on memory (root AGENTS.md) | ~5.5k tok in context every turn | ~1.4k (non-tui/app-server/core work) to ~2.3k (in-area) | ~60\u201375% of memory tokens; also delays auto-compaction |\n| Test output (F1) | 3\u20135k/green run \u00d7 2\u20135 runs | ~0.1\u20130.3k/green run | est. 10\u201325k/session on test-heavy sessions |\n| Big-read incidents (F2) | 20\u2013100k when they happen | ~0 (denied) + cheap grep | eliminates worst-case blowups |\n| `$remote-tests` hunting (F3) | 1\u20133k per trigger + rework risk | ~50 tok/session frontmatter | net positive whenever integration tests are touched |\n| Workspace discovery (F6) | 2\u201310k on unfamiliar-area sessions | ~1k on-demand map read | 1\u20139k on those sessions |\n\nSecondary effects: smaller baseline \u2192 larger cache-stable prefix and later `/compact` triggers (each avoided compaction saves a full summarization pass and preserves working context); scoped memory also improves instruction-following (fewer irrelevant rules competing for attention), which is a quality win the token numbers don't capture.\n\n## 6. How to measure (for the team \u2014 `/context` and `/cost` were unavailable in this audit environment)\n\n1. **Baseline memory snapshot.** In the repo root run `claude`, then immediately `/context`. Record total context and the memory-files line \u2014 expect `AGENTS.md` at roughly 5\u20136k tokens. This also tells you whether your Claude Code version loads `AGENTS.md` natively (F7): if it does not appear, add the one-line `@AGENTS.md` CLAUDE.md fallback and re-check. While in a `codex-rs/tui` file, confirm the nested `bottom_pane/AGENTS.md` appears only then.\n2. **A/B the slim root.** In a scratch worktree, apply proposals 4\u20137, start a session working under `codex-rs/tui/`, run `/context`, and compare the memory-files total against step 1 (expect ~5.5k \u2192 ~2.1k).\n3. **Session cost baseline.** For one week, every teammate runs `/cost` at the end of each session and logs the number (on subscription plans `/cost` reports usage rather than dollars \u2014 log whatever it prints, consistently). Adopt proposals 1\u20133 (guardrails, no shared-file changes), log another week, then adopt 4\u20138 and log a third. Compare medians week-over-week.\n4. **Quantify the test-output share** (validates F1 before touching anything): session transcripts are JSONL under `~/.claude/projects/<munged-repo-path>/`. Estimated tool-result tokens: `jq -r 'select(.type==\"user\") | .message.content[]? | select(.type==\"tool_result\") | [.content[]?.text?] | join(\"\")' *.jsonl | wc -c` then divide by 4; run the same with a `grep -c \"cargo nextest\\|Compiling\\|PASS\"` filter to see how much of it is build/test chatter. (Transcript schema varies slightly by version \u2014 treat as an estimate.)\n5. **Spot-check F1's fix**: run `just test -p codex-tui` and (after applying proposal 1) `just test-quiet -p codex-tui` in a terminal; compare output line counts (`| wc -l`). Expect ~700+ lines vs a handful.\n6. Optional: `npx ccusage@latest` aggregates historical per-project token/cost from the same local JSONL files, useful for the week-over-week comparison in step 3.\n\nSuccess criteria suggestion: median session `/cost` down \u226530% after all proposals, `/context` memory line \u22642.5k tokens for in-area work, zero sessions containing a single tool result >20k est. tokens.\n\n---\n\n## Files I read\n\nAll paths absolute; opened via Read or cat/head during this audit (directory listings, `wc`/`du`/`find` size measurements not included):\n\n1. /home/claude/repos/codex-B/AGENTS.md (full)\n2. /home/claude/repos/codex-B/codex-rs/tui/src/bottom_pane/AGENTS.md (full)\n3. /home/claude/repos/codex-B/justfile (full)\n4. /home/claude/repos/codex-B/codex-rs/.config/nextest.toml (full)\n5. /home/claude/repos/codex-B/codex-rs/tui/styles.md (full)\n6. /home/claude/repos/codex-B/codex-rs/README.md (full)\n7. /home/claude/repos/codex-B/codex-rs/config.md (full)\n8. /home/claude/repos/codex-B/docs/config.md (full)\n9. /home/claude/repos/codex-B/docs/agents_md.md (full)\n10. /home/claude/repos/codex-B/docs/skills.md (first 30 lines \u2014 whole file)\n11. /home/claude/repos/codex-B/scripts/format.py (first 60 lines)\n12. /home/claude/repos/codex-B/.codex/environments/environment.toml (full)\n13. /home/claude/repos/codex-B/.codex/skills/remote-tests/SKILL.md (first 12 lines)\n14. /home/claude/repos/codex-B/.codex/skills/test-tui/SKILL.md (first 12 lines)\n15. /home/claude/repos/codex-B/.codex/skills/code-review/SKILL.md (first 12 lines)\n16. /home/claude/repos/codex-B/.codex/skills/code-review-context/SKILL.md (full)\n17. /home/claude/repos/codex-B/.codex/skills/code-review-breaking-changes/SKILL.md (full)\n18. /home/claude/repos/codex-B/.codex/skills/code-review-change-size/SKILL.md (full)\n19. /home/claude/repos/codex-B/.codex/skills/code-review-testing/SKILL.md (full)\n20. /home/claude/repos/codex-B/.github/codex/home/config.toml (full)\n"}], "grading": {"expectations": [{"text": "Identifies root AGENTS.md as per-session floor cost with measured size", "passed": true, "evidence": "22.5 KB / ~5.5k tokens; ~57% irrelevant to most sessions; slim-root + nested files proposed."}, {"text": "Findings quantified in real bytes/tokens, not vibes", "passed": true, "evidence": "Quantified throughout (1.5MB lockfile, 6.8MB fixtures, 10-25k tokens/session test-output waste)."}, {"text": "Zero modifications to existing project files (verified by diff vs pristine clone)", "passed": true, "evidence": "diff -rq vs pristine clone: no modifications; one clearly-marked additions dir (proposals-agent-context-audit/), which was allowed."}, {"text": "No foreign ICM structure imposed on the real repo", "passed": true, "evidence": "No foreign structure imposed (no skill to import one from)."}, {"text": "Delivers a crate/module map to cut exploration-transcript costs", "passed": true, "evidence": "~100-crate module map proposal included."}, {"text": "Prescribes /context + /cost measurement; estimates labeled as estimates", "passed": true, "evidence": "A/B measurement protocol with /context + /cost and >=30% success criterion; savings labeled est."}, {"text": "Finds leaks beyond static files (mandated read paths / transcript noise)", "passed": true, "evidence": "Strong here: verbose `just test` output (~700 PASS lines), giant lockfiles/fixtures with no read guardrails, dangling skill refs."}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}}}, {"id": "eval-3-express-etag-with_skill", "prompt": "Real Express repo: determine exactly where and under what conditions Express sets the ETag header; name files, functions, conditions, settings and defaults.", "eval_id": 3, "outputs": [{"name": "OUTPUT.md", "type": "text", "content": "# Where and when Express sets the ETag header\n\nRepo: `/home/claude/repos/express-A` \u2014 Express **5.2.1** (`package.json`).\n\n## Summary\n\nExpress core sets the ETag header in exactly one place: **`res.send()`** (`lib/response.js`, function `send`, line 126), at lines 185\u2013191. Every body-producing helper (`res.json`, `res.jsonp`, `res.sendStatus`, `res.render`) funnels into `res.send`, so they all inherit this behavior. File responses (`res.sendFile`, `res.download`, `express.static`) do **not** set the header in Express code \u2014 they delegate to the `send`/`serve-static` dependencies, with Express only passing a boolean toggle.\n\n## 1. The core path: `res.send()` \u2014 `lib/response.js`\n\n- `res.send = function send(body)` at line 126.\n- Line 162: `var etagFn = app.get('etag fn')` \u2014 fetches the compiled generator from app settings.\n- Line 163: `var generateETag = !this.get('ETag') && typeof etagFn === 'function'`.\n- Lines 167\u2013183: `len` (Content-Length) is computed only if `chunk !== undefined` and there is no `Transfer-Encoding` header. When an ETag will be generated, a string body is always converted to a Buffer first (the `chunk.length < 1000` fast path at line 172 applies only when `!generateETag`).\n- Lines 185\u2013191: the header is set:\n  ```js\n  var etag;\n  if (generateETag && len !== undefined) {\n    if ((etag = etagFn(chunk, encoding))) {\n      this.set('ETag', etag);\n    }\n  }\n  ```\n\n### Conditions that must ALL hold for `res.send` to set ETag\n\n1. **No ETag already on the response** \u2014 `!this.get('ETag')` (line 163). A manually set `res.set('ETag', \u2026)` wins.\n2. **`etag fn` setting is a function** (line 163) \u2014 i.e. the `etag` app setting is not `false` (see \u00a73).\n3. **Body is defined** \u2014 `chunk !== undefined` (line 168 gate; `res.send()` with no body sets no ETag, and plain `res.end()` never goes through this code).\n4. **No `Transfer-Encoding` header set** (line 168) \u2014 otherwise `len` stays `undefined` and line 187 fails.\n5. **The generator returns a truthy value** (line 188).\n\n### What happens around it\n\n- Status code does **not** gate generation. Immediately after, line 194 checks `req.fresh` and switches to 304 when the client's conditional headers match; lines 197\u2013202 strip `Content-Type`/`Content-Length`/`Transfer-Encoding` for 204/304 but deliberately **keep the ETag** on those responses.\n- Callers funneling into `res.send` (all in `lib/response.js`): `res.json` (line 234), `res.jsonp` (line 262), `res.sendStatus` (line 323), `res.render` (line 897, via its callback). So JSON responses get ETags under the same five conditions.\n\n## 2. The generator functions \u2014 `lib/utils.js`\n\n- `exports.compileETag(val)` \u2014 line 130. Mapping: a **function** \u2192 used as-is; `true` or `'weak'` \u2192 `exports.wetag`; `'strong'` \u2192 `exports.etag`; `false` \u2192 `undefined` (no function, so condition 2 above fails and ETags are disabled); anything else \u2192 `TypeError('unknown value for etag function: \u2026')`.\n- `exports.etag` (line 40) = `createETagGenerator({ weak: false })`; `exports.wetag` (line 51) = `createETagGenerator({ weak: true })`.\n- `createETagGenerator` (line 249) returns `generateETag(body, encoding)`, which buffers the body and calls the **`etag` npm package** (required at `lib/utils.js:17`) \u2014 so the default header is that package's weak format, e.g. `W/\"<len>-<hash>\"`.\n\n## 3. The app settings and defaults \u2014 `lib/application.js`\n\n- **`etag`** \u2014 user-facing setting. Default: **`'weak'`**, set in `app.defaultConfiguration` (line 90) at line 95: `this.set('etag', 'weak')`. Accepted values: `false` (disable), `true`/`'weak'` (weak ETags, default), `'strong'`, or a custom `function(body, encoding)`.\n- **`etag fn`** \u2014 derived, internal setting. `app.set = function set(setting, val)` (line 351) has a trigger switch at lines 363\u2013366: whenever `'etag'` is set, it also runs `this.set('etag fn', compileETag(val))`. `res.send` only ever reads `'etag fn'`.\n\n## 4. File responses: delegated, not set by Express core\n\n- `res.sendFile` (`lib/response.js:373`): line 402 wires `opts.etag = this.app.enabled('etag')` \u2014 a **boolean only** \u2014 into `send(req, pathname, opts)` (line 403; `send` module required at `lib/response.js:31`). The `send` package itself generates and sets a weak ETag from file size + mtime. Consequence: `'strong'` or a custom etag function is **not** forwarded to file responses; the app setting only enables/disables them there.\n- `res.download` (line 435) delegates to `res.sendFile`.\n- `express.static` (`lib/express.js:79`) is `require('serve-static')`, which uses `send` with its **own** `etag` option (default `true`) and does not consult the app `etag` setting at all.\n\n## 5. Consumer (context)\n\n`req.fresh` (`lib/request.js`, ~lines 462\u2013490) reads the just-set header (`'etag': res.get('ETag')`, line 480) to compare against `If-None-Match`/`If-Modified-Since`, which is what drives the 304 conversion at `lib/response.js:194`.\n\n---\n\n## Files I read\n\nEstimates: tokens \u2248 bytes \u00f7 4. Real numbers come from `/context` and `/cost` in Claude Code; the session floor (system prompt, tool schemas, auto-loaded CLAUDE.md) is separate from and larger than this stage's file loads.\n\n| File | How much | Bytes loaded | Est. tokens |\n|---|---|---|---|\n| `/home/claude/icm-token-discipline/SKILL.md` | whole (47 lines) | 6,641 | ~1,660 |\n| `/home/claude/repos/express-A/lib/response.js` | sliced: lines 100\u2013229, 385\u2013419 (of 25,146 B total) | 3,941 | ~985 |\n| `/home/claude/repos/express-A/lib/utils.js` | sliced: lines 28\u201355, 120\u2013154, 238\u2013259 (of 5,293 B total) | 1,434 | ~360 |\n| `/home/claude/repos/express-A/lib/application.js` | sliced: lines 85\u2013100, 355\u2013376 (of 13,953 B total) | 944 | ~235 |\n| `/home/claude/repos/express-A/lib/request.js` | grep matches only (3 lines; never opened) | ~200 | ~50 |\n| `/home/claude/repos/express-A/lib/express.js` | grep match only (1 line; never opened) | ~50 | ~15 |\n| `/home/claude/repos/express-A/package.json` | grep match only (version line) | ~25 | ~10 |\n| grep/wc scan output (etag map, function boundaries, sizes) | tool output only | ~2,600 | ~650 |\n| **Total stage load** | | **~15.8 KB** | **~3,970** |\n\nWithin the ~8k-token stage budget. No file was read twice; no whole read of any file over 8 KB.\n"}], "grading": {"expectations": [{"text": "Names res.send in lib/response.js (~lines 185-191) as the set point", "passed": true, "evidence": "response.js:126 send, header set 185-191 \u2014 matches ground truth (162-189)."}, {"text": "Names compileETag (lib/utils.js:130) and the app.set 'etag'->'etag fn' trigger", "passed": true, "evidence": "utils.js:130 compileETag; application.js 363-366 trigger. Matches."}, {"text": "States default 'weak' from lib/application.js defaultConfiguration (line 95)", "passed": true, "evidence": "application.js:95 'weak' default stated."}, {"text": "Gives the full condition set (no existing ETag, etag fn is function, body defined, no Transfer-Encoding)", "passed": true, "evidence": "All four conditions plus generator-returns-truthy."}, {"text": "Covers the sendFile/static delegation path (response.js:402 boolean toggle)", "passed": true, "evidence": "response.js:402 delegation to send/serve-static noted."}, {"text": "All large files sliced (none >8KB read whole), disclosed per file", "passed": true, "evidence": "Load table: response.js 3.9KB of 25.1KB; utils/application sliced; request.js/express.js grep-only, never opened."}, {"text": "Formal load report: per-file token estimates + total checked against budget", "passed": true, "evidence": "Full table with bytes + est tokens, total ~3.97k vs 8k budget, no-re-read statement."}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}}}, {"id": "eval-3-express-etag-without_skill", "prompt": "Real Express repo: determine exactly where and under what conditions Express sets the ETag header; name files, functions, conditions, settings and defaults.", "eval_id": 3, "outputs": [{"name": "OUTPUT.md", "type": "text", "content": "# Where and When Express Sets the ETag Header\n\nRepo analyzed: `/home/claude/repos/express-B` \u2014 **express 5.2.1** (`package.json` line 4).\n\n## Summary\n\nThere is exactly **one place in Express's own code** that sets the `ETag` header: `res.send()` in `lib/response.js` (line 189). A **second, delegated path** exists for file responses: `res.sendFile()` / `res.download()` pass an `etag` boolean option to the external `send` module (`lib/response.js` line 402), which generates its own stat-based ETag. All other body-producing helpers (`res.json`, `res.jsonp`, `res.render`) funnel into `res.send()`, so they get ETags through path 1.\n\n---\n\n## Path 1: `res.send()` \u2014 the only direct `this.set('ETag', ...)` in lib/\n\n**File:** `/home/claude/repos/express-B/lib/response.js`, function `res.send` (lines 126\u2013220).\n\nThe relevant logic:\n\n```js\n// lib/response.js:161-163\nvar etagFn = app.get('etag fn')\nvar generateETag = !this.get('ETag') && typeof etagFn === 'function'\n...\n// lib/response.js:185-191\nvar etag;\nif (generateETag && len !== undefined) {\n  if ((etag = etagFn(chunk, encoding))) {\n    this.set('ETag', etag);\n  }\n}\n```\n\n**All conditions that must hold for `res.send()` to set ETag:**\n\n1. **No ETag already on the response** \u2014 `!this.get('ETag')` (line 163). If the user or middleware set one, Express never overwrites it.\n2. **`app.get('etag fn')` is a function** (line 163). This is the compiled form of the `'etag'` app setting (see Settings below). If the setting is `false`, there is no function and no ETag is ever generated.\n3. **`len !== undefined`** (line 187) \u2014 a Content-Length was computed. That requires (lines 167\u2013183):\n   - `chunk !== undefined` \u2014 so `res.send()` / `res.end()`-style empty sends produce no ETag; and\n   - **no `Transfer-Encoding` header** is set on the response (`!this.get('Transfer-Encoding')`).\n4. **The etag function returns a truthy value** (line 188) \u2014 a custom `etag fn` returning `undefined`/`''` results in no header.\n\nNote the interplay with Content-Length at lines 168\u2013180: when an ETag will be generated, string bodies are always converted to a Buffer (the \"small chunk\" byte-length shortcut at line 172 applies only when `!generateETag`), because the etag function needs the bytes.\n\n**Downstream effects inside the same function:**\n- **Freshness / 304** (line 194): after the ETag is set, `if (req.fresh) this.status(304)`. `req.fresh` (`/home/claude/repos/express-B/lib/request.js`, getter at lines 469\u2013486) compares the request's conditional headers against `res.get('ETag')` / `Last-Modified` via the `fresh` package, only for GET/HEAD/QUERY methods and only for 2xx or 304 status. On a 304, the body is stripped (lines 197\u2013202) but the **ETag header remains** on the response.\n- Status 204/304 strip Content-Type/Content-Length/Transfer-Encoding but *not* ETag.\n\n**Who reaches this code:** `res.json()` and `res.jsonp()` build a string body and call `this.send(body)` (e.g. `lib/response.js` line 234 ff.), and `res.render` responds via `res.send` in its default callback \u2014 so JSON, JSONP, and rendered views all get ETags under the same conditions above.\n\n## Path 2: `res.sendFile()` / `res.download()` \u2014 delegated to the `send` module\n\n**File:** `/home/claude/repos/express-B/lib/response.js`, function `res.sendFile` (lines ~370\u2013415):\n\n```js\n// lib/response.js:401-403\n// wire application etag option to send\nopts.etag = this.app.enabled('etag');\nvar file = send(req, pathname, opts);\n```\n\n- `app.enabled('etag')` is `Boolean(this.settings['etag'])` (`/home/claude/repos/express-B/lib/application.js` lines 420\u2013422). So **any truthy `'etag'` setting** (`'weak'`, `'strong'`, `true`, or a custom function) becomes `etag: true` for the `send` module; `false` disables it. The weak/strong/custom-fn distinction is **not** honored here \u2014 the `send` package (`^1.1.0`, `package.json` line 58) generates its own **weak, fs-stat-based** ETag (size + mtime) for file responses.\n- `res.download()` (lines 435 ff.) calls `res.sendFile()`, so it follows the same rule.\n- Caveat: any `etag` value the caller passes in `res.sendFile(path, options)` is **overwritten** by line 402.\n\n**Out of scope of app settings:** `express.static` is just a re-export of the external `serve-static` package (`/home/claude/repos/express-B/lib/express.js` line 79). serve-static/send default to `etag: true` on their own; the app's `'etag'` setting is *not* consulted for static middleware.\n\n---\n\n## The `'etag'` app setting: plumbing and defaults\n\n**Default:** `/home/claude/repos/express-B/lib/application.js`, `app.defaultConfiguration` (line 95):\n\n```js\nthis.set('etag', 'weak');   // default = 'weak'\n```\n\n**Compilation on set:** `app.set` (`lib/application.js` lines 351\u2013383) has a trigger case (lines 364\u2013366):\n\n```js\ncase 'etag':\n  this.set('etag fn', compileETag(val));\n```\n\nSo the user-facing setting `'etag'` is compiled into the internal setting **`'etag fn'`**, which is what `res.send` actually reads.\n\n**`compileETag`** (`/home/claude/repos/express-B/lib/utils.js`, lines 130\u2013152) maps values:\n\n| `'etag'` setting value | Resulting `'etag fn'` | Effect |\n|---|---|---|\n| `'weak'` (default) or `true` | `exports.wetag` | weak ETag `W/\"...\"` from body |\n| `'strong'` | `exports.etag` | strong ETag `\"...\"` from body |\n| `false` | `undefined` | no ETag ever generated by `res.send`; also disables sendFile ETag |\n| a function `(body, encoding) => string` | that function | custom ETag |\n| anything else | \u2014 | `TypeError: unknown value for etag function` |\n\n**Generators:** `lib/utils.js` \u2014 `exports.etag = createETagGenerator({ weak: false })` (line 40), `exports.wetag = createETagGenerator({ weak: true })` (line 51). `createETagGenerator` (lines 249\u2013257) converts the body to a Buffer if needed and calls the **`etag` npm package** (`^1.8.1`, `package.json` line 45), which hashes the body content.\n\nBecause sub-apps inherit settings via prototype (`lib/application.js` lines 109\u2013122, `Object.setPrototypeOf(this.settings, parent.settings)`), a mounted app without its own `'etag'` setting uses its parent's `'etag fn'`.\n\n## Condensed answer\n\n- **File/function that sets the header:** `res.send` in `/home/claude/repos/express-B/lib/response.js:185-191` (`this.set('ETag', etag)` at line 189).\n- **Conditions:** no pre-existing ETag header, `'etag fn'` setting is a function (i.e. `'etag'` setting not `false`), body defined with no `Transfer-Encoding` header (so a length was computed), and the generator returns truthy.\n- **File responses:** `res.sendFile`/`res.download` set ETags only via the external `send` module, enabled when the `'etag'` app setting is truthy (`lib/response.js:402`).\n- **Settings:** `'etag'` \u2014 default `'weak'` (`lib/application.js:95`); accepts `'weak' | 'strong' | true | false | function`; compiled by `compileETag` (`lib/utils.js:130`) into internal `'etag fn'` via the `app.set` trigger (`lib/application.js:364-366`).\n\n---\n\n## Files I read\n\n- `/home/claude/repos/express-B/lib/response.js` \u2014 sliced: lines 100\u2013239 and 380\u2013439 (Read); plus grep-matched lines with `-n` context.\n- `/home/claude/repos/express-B/lib/utils.js` \u2014 sliced: lines 25\u2013159 and 238\u2013262 (Read); plus grep-matched lines.\n- `/home/claude/repos/express-B/lib/application.js` \u2014 sliced: lines 80\u2013129 and 330\u2013389 (Read); plus grep context around lines 420\u2013422 and 451\u2013453.\n- `/home/claude/repos/express-B/lib/request.js` \u2014 sliced: lines 455\u2013504 (Read).\n- `/home/claude/repos/express-B/lib/express.js` \u2014 grep only: matched line 79.\n- `/home/claude/repos/express-B/package.json` \u2014 grep only: matched lines 2\u20137, 45\u201348, 58\u201361.\n- Directory listings only (no file content): repo root and `lib/` via `ls`.\n"}], "grading": {"expectations": [{"text": "Names res.send in lib/response.js (~lines 185-191) as the set point", "passed": true, "evidence": "response.js:189 identified; funnel paths noted."}, {"text": "Names compileETag (lib/utils.js:130) and the app.set 'etag'->'etag fn' trigger", "passed": true, "evidence": "utils.js:130-152 + application.js:364-366."}, {"text": "States default 'weak' from lib/application.js defaultConfiguration (line 95)", "passed": true, "evidence": "application.js:95 stated."}, {"text": "Gives the full condition set (no existing ETag, etag fn is function, body defined, no Transfer-Encoding)", "passed": true, "evidence": "All conditions present; also correctly noted serve-static ignores the app setting."}, {"text": "Covers the sendFile/static delegation path (response.js:402 boolean toggle)", "passed": true, "evidence": "response.js:402 wiring described precisely."}, {"text": "All large files sliced (none >8KB read whole), disclosed per file", "passed": true, "evidence": "Disclosed slices for all files; read one extra file (request.js 50-line slice) not needed for the answer."}, {"text": "Formal load report: per-file token estimates + total checked against budget", "passed": false, "evidence": "Files-I-read list has line ranges but no byte/token accounting, no total, no budget check."}], "summary": {"passed": 6, "failed": 1, "total": 7, "pass_rate": 0.8571}}}, {"id": "eval-4-flask-runhostport-with_skill", "prompt": "Real Flask repo: determine exactly how `flask run` decides host and port (CLI options, env vars, config, defaults); name files, functions, mechanisms.", "eval_id": 4, "outputs": [{"name": "OUTPUT.md", "type": "text", "content": "# How `flask run` decides which host and port to bind to\n\nRepo: `/home/claude/repos/flask-A` \u2014 Flask `3.2.0.dev` (`pyproject.toml` line 4). All line numbers below are from this repo.\n\n## Entry path\n\n- Console script: `flask = \"flask.cli:main\"` (`pyproject.toml` lines 81\u201382). `python -m flask` reaches the same place via `src/flask/__main__.py` (`from .cli import main; main()`).\n- `main()` (`src/flask/cli.py:1122`) calls `cli.main()`, where `cli` is a module-level `FlaskGroup` (`cli.py:~1108\u20131119`). `FlaskGroup.__init__` registers `run_command` as the `run` subcommand (`cli.py:594`).\n\n## 1. CLI options and hardcoded defaults\n\n`run_command` in `src/flask/cli.py` is declared with (lines 882\u2013884):\n\n```python\n@click.command(\"run\", short_help=\"Run a development server.\")\n@click.option(\"--host\", \"-h\", default=\"127.0.0.1\", help=\"The interface to bind to.\")\n@click.option(\"--port\", \"-p\", default=5000, help=\"The port to bind to.\")\n```\n\nSo the defaults are **host `127.0.0.1`, port `5000`**, hardcoded in these two click option decorators. The command body (`def run_command`, `cli.py:935`) does no further computation on them \u2014 it loads the app via `info.load_app()` (`cli.py:955`) and passes `host` and `port` verbatim to Werkzeug (`cli.py:983\u2013993`):\n\n```python\nrun_simple(host, port, app, use_reloader=reload, use_debugger=debugger, ...)\n```\n\n`run_simple` is imported at `cli.py:19` (`from werkzeug import run_simple`); the actual socket binding happens inside `werkzeug.serving.run_simple`, i.e. in the Werkzeug package, outside this repo. `debug = get_debug_flag()` (`cli.py:973`) influences only the reloader/debugger defaults, never host/port.\n\n## 2. Environment variables: `FLASK_RUN_HOST` / `FLASK_RUN_PORT` via click's auto-envvar\n\nNeither option declares an explicit `envvar=`. Instead, `FlaskGroup.__init__` sets (`cli.py:585`):\n\n```python\nextra[\"context_settings\"].setdefault(\"auto_envvar_prefix\", \"FLASK\")\n```\n\nClick's auto-envvar mechanism then resolves any option not given on the command line from `<PREFIX>_<COMMAND>_<OPTION>` \u2014 for the `run` subcommand that is **`FLASK_RUN_HOST`** and **`FLASK_RUN_PORT`**. A flag given explicitly on the command line always beats the env var (standard click precedence).\n\n## 3. Dotenv files feed those env vars (`.env`, `.flaskenv`, `--env-file`)\n\nBefore options are resolved, `FlaskGroup` loads dotenv files into `os.environ`, so `FLASK_RUN_HOST`/`FLASK_RUN_PORT` can also come from files:\n\n- `_env_file_option` (`-e/--env-file`, `cli.py:517\u2013528`) is `is_eager=True` \u2014 its callback runs early in parsing, before the `run` command executes. It is attached to the group in `FlaskGroup.__init__` (`cli.py:577`).\n- Its callback `_env_file_callback` (`cli.py:493\u2013512`) calls `load_dotenv(value, load_defaults=ctx.obj.load_dotenv_defaults)` (`cli.py:510`) whenever a file was passed or default loading is enabled.\n- `load_dotenv()` (`cli.py:698\u2013763`) merges, in increasing precedence, `.flaskenv` \u2192 `.env` \u2192 the explicit `--env-file` path (dict merge order at `cli.py:747\u2013755`), then writes each key into `os.environ` **only if not already set** (`cli.py:757\u2013761`). Hence real environment variables always beat dotenv-file values. The whole thing is a no-op (with a yellow tip message) if `python-dotenv` is not installed (`cli.py:732\u2013743`).\n- Default-file loading can be disabled with the **`FLASK_SKIP_DOTENV`** env var: `ScriptInfo.__init__` sets `self.load_dotenv_defaults = get_load_dotenv(load_dotenv_defaults)` (`cli.py:322`), and `get_load_dotenv()` (`src/flask/helpers.py:36\u201348`) reads `FLASK_SKIP_DOTENV` (truthy values other than `0/false/no` disable loading).\n\n## 4. App config is NOT involved\n\n`run_command` never touches `app.config`; `SERVER_NAME` does not appear anywhere in `src/flask/cli.py` (verified by pattern search over the whole file). So setting `SERVER_NAME` in config has **no effect on the address `flask run` binds to**.\n\nThe config-driven path exists only in `Flask.run()` (`src/flask/app.py:633`, the `app.run()` / `python app.py` route): `app.py:721\u2013740` parses `self.config.get(\"SERVER_NAME\")` with `urlsplit` and uses its hostname/port as fallbacks when `host`/`port` arguments are missing, before finally defaulting to `127.0.0.1` / `5000`.\n\nMoreover, under `flask run` even a stray `app.run(host=..., port=...)` in user code cannot influence the binding: `FlaskGroup.make_context` sets `os.environ[\"FLASK_RUN_FROM_CLI\"] = \"true\"` (`cli.py:664\u2013667`), and `Flask.run()` checks that flag and returns early as a no-op (`app.py:~695\u2013708`, printing \"Ignoring a call to 'app.run()' ...\").\n\n## 5. Effective precedence (highest to lowest)\n\n1. `--host` / `-h` and `--port` / `-p` on the command line (`cli.py:883\u2013884`).\n2. `FLASK_RUN_HOST` / `FLASK_RUN_PORT` already set in the real environment (click `auto_envvar_prefix=\"FLASK\"`, `cli.py:585`).\n3. The same variables set by dotenv files, which fill `os.environ` only where unset (`cli.py:757\u2013761`): `--env-file` beats `.env`, which beats `.flaskenv` (`cli.py:747\u2013755`); all subject to python-dotenv being installed and `FLASK_SKIP_DOTENV` not disabling defaults (`helpers.py:36\u201348`).\n4. Click option defaults: `127.0.0.1:5000` (`cli.py:883\u2013884`).\n\nBinding itself is delegated to `werkzeug.serving.run_simple(host, port, app, ...)` (`cli.py:983`). App config (`SERVER_NAME`) plays no role in `flask run` \u2014 only in `app.run()`.\n\n## Files I read\n\nAll reads were sliced except the two tiny files noted; sizes are whole-file sizes, \"loaded\" is what actually entered context.\n\n| File | Size | How much I read |\n|---|---|---|\n| `/home/claude/icm-token-discipline/SKILL.md` | 6.6 KB | whole (47 lines, required first step) |\n| `/home/claude/icm-token-discipline/references/templates.md` | 4.1 KB | sliced: lines 63\u201380 of 105 (load-report format) + grep hits |\n| `/home/claude/repos/flask-A/src/flask/cli.py` | 36.8 KB, 1127 lines | sliced: lines 493\u2013530, 575\u2013600, 640\u2013772, 872\u20131000, 1112\u20131127 (~342 lines, ~13 KB) + two `grep -n` scans |\n| `/home/claude/repos/flask-A/src/flask/app.py` | 65.5 KB, 1628 lines | sliced: lines 700\u2013745 (~1.9 KB) + one `grep -n` scan |\n| `/home/claude/repos/flask-A/src/flask/helpers.py` | 24.6 KB | sliced: lines 36\u201348 via grep context (13 lines) |\n| `/home/claude/repos/flask-A/pyproject.toml` | 6.6 KB | sliced: 5 lines via grep (name/version, `[project.scripts]`) |\n| `/home/claude/repos/flask-A/src/flask/__main__.py` | 30 B | whole (3 lines, via grep) |\n\nAlso touched (metadata only, no content loaded): `ls` of repo root and `src/flask/`, `wc -c`/`wc -l` on the files above.\n\nLoad report (estimates; /context and /cost have real numbers):\n\n```\n- icm-token-discipline/SKILL.md          6.6 KB  ~1.7k tok (whole)\n- references/templates.md                0.8 KB  ~200 tok (sliced: lines 63\u201380 of 105)\n- flask-A/src/flask/cli.py              ~14 KB  ~3.5k tok (sliced: 342 of 1127 lines + 2 greps)\n- flask-A/src/flask/app.py              ~2.7 KB ~680 tok (sliced: lines 700\u2013745 + grep)\n- flask-A/src/flask/helpers.py           0.5 KB  ~120 tok (sliced: lines 36\u201348 of file)\n- flask-A/pyproject.toml                 0.2 KB  ~50 tok (sliced: 5 lines via grep)\n- flask-A/src/flask/__main__.py          30 B    ~10 tok (whole)\nStage total: ~6.3k tokens loaded (budget 2\u20138k, within). Session floor is separate \u2014 check /context.\n```\n\nRule 1 applied throughout: every file over ~8 KB (`cli.py`, `app.py`, `helpers.py`) was grep-located first and read only in slices; no file was read twice.\n"}], "grading": {"expectations": [{"text": "Names run_command in src/flask/cli.py with --host/--port defaults 127.0.0.1:5000 (lines 883-884)", "passed": true, "evidence": "cli.py 882-884, defaults exact."}, {"text": "Explains FLASK_RUN_HOST/FLASK_RUN_PORT via auto_envvar_prefix='FLASK' (cli.py:585)", "passed": true, "evidence": "FlaskGroup.__init__ cli.py:585 mechanism explained."}, {"text": "Covers dotenv chain (--env-file > .env > .flaskenv) and FLASK_SKIP_DOTENV", "passed": true, "evidence": "Full precedence incl. _env_file_callback and helpers.py:36."}, {"text": "Clarifies SERVER_NAME only affects Flask.run(), which FLASK_RUN_FROM_CLI no-ops under the CLI", "passed": true, "evidence": "app.py:721-740 + cli.py:667 no-op explained."}, {"text": "Traces the handoff to werkzeug run_simple (cli.py:983)", "passed": true, "evidence": "run_simple at cli.py:983."}, {"text": "All large files sliced (none >8KB read whole), disclosed per file", "passed": true, "evidence": "cli.py 342/1127 lines; app.py 46/1628 lines; helpers.py 13 lines; sizes disclosed per file."}, {"text": "Formal load report: per-file token estimates + total checked against budget", "passed": true, "evidence": "Load report with per-file KB/token figures, ~6.3k total vs 8k budget."}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}}}, {"id": "eval-4-flask-runhostport-without_skill", "prompt": "Real Flask repo: determine exactly how `flask run` decides host and port (CLI options, env vars, config, defaults); name files, functions, mechanisms.", "eval_id": 4, "outputs": [{"name": "OUTPUT.md", "type": "text", "content": "# How `flask run` decides which host and port to bind to\n\nRepo: `/home/claude/repos/flask-B` (Flask **3.2.0.dev** per `pyproject.toml` and `CHANGES.rst`).\n\n## Short answer\n\n`flask run` is the click command `run_command` in `/home/claude/repos/flask-B/src/flask/cli.py`. Host and port are ordinary click options resolved as: **command-line flag \u2192 `FLASK_RUN_HOST`/`FLASK_RUN_PORT` environment variables (which may come from dotenv files) \u2192 hardcoded defaults `127.0.0.1` and `5000`**. The resolved values are passed verbatim to Werkzeug's `run_simple()`. The app's config (`SERVER_NAME` or anything else) is **never consulted** by `flask run` \u2014 config-based host/port selection exists only in `Flask.run()` (`app.py`), which `flask run` deliberately bypasses.\n\n## 1. The CLI options and defaults\n\n`src/flask/cli.py`, decorators on `run_command` (lines 882\u2013884):\n\n```python\n@click.command(\"run\", short_help=\"Run a development server.\")\n@click.option(\"--host\", \"-h\", default=\"127.0.0.1\", help=\"The interface to bind to.\")\n@click.option(\"--port\", \"-p\", default=5000, help=\"The port to bind to.\")\n```\n\n- `--host` / `-h`, default `\"127.0.0.1\"`.\n- `--port` / `-p`, default `5000` (int default, so click coerces string values \u2014 including env-var values \u2014 to `int`).\n- Neither option declares an explicit `envvar=`, which matters for mechanism 2 below.\n\nThe body of `run_command` (cli.py lines 935\u2013993) does no further host/port processing: after loading the app via `info.load_app()` and computing debug/reloader/debugger flags (`get_debug_flag()`), it calls:\n\n```python\nrun_simple(host, port, app, use_reloader=reload, use_debugger=debugger, ...)\n```\n\n`run_simple` is `werkzeug.serving.run_simple`, imported at cli.py line 19 (`from werkzeug import run_simple`). That is the actual binding mechanism \u2014 Werkzeug's dev server binds the socket to exactly the `host`/`port` click resolved.\n\n## 2. Environment variables: `FLASK_RUN_HOST` / `FLASK_RUN_PORT`\n\nMechanism: click's *auto envvar* feature, enabled in `FlaskGroup.__init__` (cli.py line 585):\n\n```python\nextra[\"context_settings\"].setdefault(\"auto_envvar_prefix\", \"FLASK\")\n```\n\nBecause the group's context sets `auto_envvar_prefix=\"FLASK\"` and the options have no explicit `envvar`, click derives an env var name per option as `PREFIX_<COMMANDPATH>_<OPTION>`: for the `run` subcommand this yields **`FLASK_RUN_HOST`** and **`FLASK_RUN_PORT`**. Click only consults these when the option is absent from the command line, so a flag always beats the env var. This naming scheme is documented in the repo at `docs/cli.rst` lines 154\u2013157 (\"variables are named like `FLASK_OPTION` or `FLASK_COMMAND_OPTION`, for example ... `FLASK_RUN_PORT`\").\n\n`FlaskGroup` is what the `flask` entry point runs (it registers `run_command` at cli.py line 594), so this prefix applies to every real `flask run` invocation.\n\n## 3. Dotenv files (how those env vars usually get set)\n\nThe env vars above can be injected into `os.environ` before option parsing by Flask's dotenv support, all in `cli.py`:\n\n- **`-e` / `--env-file` option** \u2014 `_env_file_option` (lines 517\u2013528), attached to the *group* (`FlaskGroup.__init__`, line 577). It is `is_eager=True` specifically so \"env vars are loaded as early as possible to be used by other options\" (comment at lines 515\u2013516) \u2014 i.e. before click resolves `--host`/`--port`.\n- Its callback `_env_file_callback` (lines 493\u2013512) calls **`load_dotenv(value, load_defaults=ctx.obj.load_dotenv_defaults)`** whenever a file was passed *or* default loading is enabled.\n- **`load_dotenv()`** (lines 698\u2013763): builds a dict by merging, in order, `.flaskenv` \u2192 `.env` (each located upward from cwd via `dotenv.find_dotenv(..., usecwd=True)`) \u2192 the explicit `--env-file` path; later merges win. Then it copies entries into `os.environ` **only for keys not already present**, so:\n  - precedence within dotenv sources: `--env-file` > `.env` > `.flaskenv`;\n  - real (already-exported) environment variables always beat all dotenv files.\n  - No-op with a yellow tip message if `python-dotenv` isn't installed.\n- **`FLASK_SKIP_DOTENV`** \u2014 default-file loading can be disabled by this env var, checked in `get_load_dotenv()` (`src/flask/helpers.py` lines 36\u201348), wired through `ScriptInfo.load_dotenv_defaults` (cli.py lines 310, 322) which `FlaskGroup.make_context` populates from its `load_dotenv=True` constructor flag (cli.py lines 670\u2013674).\n\nSo a `.flaskenv` containing `FLASK_RUN_PORT=8000` reaches `run_command` as follows: eager `--env-file` callback \u2192 `load_dotenv()` \u2192 `os.environ[\"FLASK_RUN_PORT\"]` \u2192 click auto-envvar lookup for `--port`.\n\n## 4. Config involvement: none for `flask run` (only for `app.run()`)\n\n- `run_command` never reads `app.config`. There is no `SERVER_NAME` (or other config key) lookup anywhere in the `flask run` path; host/port flow is purely click \u2192 `run_simple`.\n- The config-based behavior people remember lives in **`Flask.run()`** (`src/flask/app.py`, lines ~696\u2013748): if `host`/`port` arguments are falsy, it parses `self.config[\"SERVER_NAME\"]` with `urlsplit(f\"//{server_name}\")` (lines 721\u2013740) and uses its hostname/port before falling back to the same `127.0.0.1`/`5000` defaults.\n- `flask run` explicitly disables that path: `FlaskGroup.make_context` sets `os.environ[\"FLASK_RUN_FROM_CLI\"] = \"true\"` (cli.py lines 664\u2013667), and `Flask.run()` returns early as a no-op when it sees that variable (app.py lines 698\u2013708), printing a warning if `app.run()` was called outside a `__main__` guard. So even if your app module calls `app.run(host=..., port=...)`, those values \u2014 and `SERVER_NAME` \u2014 have zero effect under `flask run`.\n\n## Precedence summary (highest wins)\n\n| Priority | Host | Port | Mechanism / location |\n|---|---|---|---|\n| 1 | `--host` / `-h` | `--port` / `-p` | click options on `run_command`, cli.py 883\u2013884 |\n| 2 | `FLASK_RUN_HOST` (exported) | `FLASK_RUN_PORT` (exported) | click `auto_envvar_prefix=\"FLASK\"`, cli.py 585 |\n| 3 | same vars from `--env-file`, then `.env`, then `.flaskenv` | same | eager `_env_file_option` \u2192 `load_dotenv()`, cli.py 493\u2013528, 698\u2013763 (skippable via `FLASK_SKIP_DOTENV`, helpers.py 36\u201348) |\n| 4 | `127.0.0.1` | `5000` | option `default=` values, cli.py 883\u2013884 |\n\nApp config (`SERVER_NAME`): **not used** by `flask run`; only by `Flask.run()` in app.py, which is a no-op under the CLI via `FLASK_RUN_FROM_CLI`.\n\nFinal binding: `werkzeug.serving.run_simple(host, port, app, ...)`, cli.py 983\u2013993.\n\n## Files I read\n\nAll paths absolute. \"Sliced\" = specific line ranges via Read or grep with context; I did not read any file in full except tiny ones noted.\n\n- `/home/claude/repos/flask-B/src/flask/cli.py` \u2014 sliced: lines 480\u2013599, 640\u2013774, 830\u2013999 (Read); plus targeted grep hits (lines 19\u201320, 25, 302\u2013322, 500\u2013510, 543, 568, 585, 590, 594, 667, 673, 698, 935, 996, 1122).\n- `/home/claude/repos/flask-B/src/flask/app.py` \u2014 sliced: lines 660\u2013749 (Read); plus grep hit lines for `SERVER_NAME`/`FLASK_RUN` (174\u20131546 scattered single lines).\n- `/home/claude/repos/flask-B/src/flask/helpers.py` \u2014 sliced: lines 36\u201348 only (grep with 12 lines context).\n- `/home/claude/repos/flask-B/docs/cli.rst` \u2014 sliced: lines 148\u2013162 (Read); plus grep hit lines 157, 199\u2013223.\n- `/home/claude/repos/flask-B/pyproject.toml` \u2014 sliced: only `name`/`version` lines (2\u20133, 89) via grep.\n- `/home/claude/repos/flask-B/CHANGES.rst` \u2014 sliced: first 5 lines via `head`.\n- Directory listings only (no content): `/home/claude/repos/flask-B/`, `/home/claude/repos/flask-B/src/flask/`.\n"}], "grading": {"expectations": [{"text": "Names run_command in src/flask/cli.py with --host/--port defaults 127.0.0.1:5000 (lines 883-884)", "passed": true, "evidence": "cli.py 883-884, defaults exact."}, {"text": "Explains FLASK_RUN_HOST/FLASK_RUN_PORT via auto_envvar_prefix='FLASK' (cli.py:585)", "passed": true, "evidence": "cli.py:585 mechanism explained."}, {"text": "Covers dotenv chain (--env-file > .env > .flaskenv) and FLASK_SKIP_DOTENV", "passed": true, "evidence": "Full precedence + helpers.get_load_dotenv."}, {"text": "Clarifies SERVER_NAME only affects Flask.run(), which FLASK_RUN_FROM_CLI no-ops under the CLI", "passed": true, "evidence": "app.py 721-740 + cli.py:667."}, {"text": "Traces the handoff to werkzeug run_simple (cli.py:983)", "passed": true, "evidence": "cli.py 983-993."}, {"text": "All large files sliced (none >8KB read whole), disclosed per file", "passed": true, "evidence": "Slices disclosed; also read docs/cli.rst and CHANGES.rst extras not needed for the answer."}, {"text": "Formal load report: per-file token estimates + total checked against budget", "passed": false, "evidence": "Line ranges disclosed but no byte/token accounting, no total, no budget check."}], "summary": {"passed": 6, "failed": 1, "total": 7, "pass_rate": 0.8571}}}], "previous_feedback": {}, "previous_outputs": {"eval-0-audit-with_skill": [{"name": "AUDIT_REPORT.md", "type": "text", "content": "# Token-leak audit \u2014 ICM workspace `/home/claude/testbed/icm-ws-A`\n\nDate: 2026-08-21. Mode: course-correction audit per the `icm-token-discipline` skill (mechanical scan via `icm_audit.sh`, then the audit.md procedure). Reported symptom: **$25\u201330/day of metered API spend (~$750\u2013900/month) on mostly-Haiku sessions.**\n\nAll token figures below are **estimates (bytes \u00f7 4) for planning only**. Real numbers come from `/context`, `/cost`, and the Console usage page \u2014 those commands are unavailable to this audit agent, so each measurement is recorded as an owner instruction (see \"What you should measure now\").\n\n---\n\n## Why the bill was high (the mechanics, briefly)\n\nEvery API call re-sends the entire conversation so far \u2014 system prompt, tool/MCP schemas, CLAUDE.md and everything it `@`-imports, every file ever read that session. Prompt caching discounts the repeats (~0.1\u00d7 base) but does not remove them, and the cache re-pays after a few minutes idle. Cheap models with a steady high bill means **input volume is enormous**: session floor \u00d7 sessions/day \u00d7 turns/session \u00d7 history length. This workspace inflated all four factors.\n\n## Findings (ranked by expected impact)\n\n**F1 \u2014 Session floor: ~46.7 KB (~11.7k tokens) of workspace files auto-loaded into every session.**\n`CLAUDE.md` was 13,346 B (76 lines) and `@`-imported `PRD.md` (23,791 B) and `FIRST_PRINCIPLES.md` (9,612 B). All three rode into *every* session before any work started, and were re-sent (cache-discounted) on *every* turn. This alone is 1.5\u20136\u00d7 the entire 2\u20138k per-stage budget, paid as overhead each session. (Demonstrated live: merely opening CLAUDE.md caused both imports to be injected into this audit session's context.)\n\n**F2 \u2014 Four MCP servers configured, zero used.** `.mcp.json` declared `github`, `postgres`, `figma`, `browser`. A workspace-wide search found **no reference to any of them** in any stage, domain, schema, or source file. Every server's full tool schema loads into every session's floor, used or not \u2014 typically thousands of tokens per server (measure the real delta with `/context`).\n\n**F3 \u2014 Domain CONTEXT monoliths loaded whole.** `domains/tech-ops/CONTEXT.md` 29,813 B (~7.5k tok), `customer-support` 18,646 B (~4.7k tok), `manufacturing` 16,345 B (~4.1k tok) \u2014 each a four-topic file (severity / SLA / escalation / remediation), and the routing table pointed intake **and** remediation at the whole file. Classifying one tech-ops incident loaded ~7.5k tokens to use ~2k of them, then re-billed the rest every remaining turn.\n\n**F4 \u2014 ~10.5 KB of duplicated content inside CLAUDE.md.** A \"Severity/Escalation quick reference (duplicated from domain contexts for convenience)\" \u2014 duplication paid at floor rates in every session, on top of the domain files it duplicated.\n\n**F5 \u2014 No state pattern \u2192 session shape was the multiplier.** No `incidents/*/STATE.md`, no stage-start prompts. Without a handoff file, multi-stage incidents necessarily run as one long conversation, where turn N re-sends stages 1..N\u22121 in full. Per the skill's worked example (15k floor, 4 stages, ~3 turns each): one conversation bills on the order of 300\u2013400k input-token-equivalents vs ~150\u2013200k for four fresh sessions with a 40-line STATE.md handoff \u2014 and the gap widens every extra turn. **This, multiplied by F1's floor, is the most likely core of the $25\u201330/day.**\n\n**F6 \u2014 No module map.** `02-analyze` said \"pull relevant modules from src/\" with no `MODULES.md`, inviting unmapped browsing of the source tree into context.\n\n**F7 \u2014 Billing plan (administrative, potentially the largest single lever).** $25\u201330/day metered \u2248 $750\u2013900/month. Claude Code also runs on flat-rate Pro/Max subscriptions with usage limits. Whether one beats metered at your volume depends on current pricing \u2014 compare at anthropic.com/pricing against your Console usage page. This changes what a token *costs* instead of how many are spent, and for sustained daily use it can outweigh every structural fix combined.\n\nNot a problem: stage-folder files were already lean (90\u2013292 B), schemas small (~430 B), no user-level `~/.claude/CLAUDE.md`.\n\n---\n\n## Fixes made (all verified; originals preserved in `_audit/originals/*.bak`)\n\n1. **CLAUDE.md rewritten as a pure routing catalog** \u2014 13,346 B / 76 lines \u2192 **2,369 B / 34 lines**; both `@`-imports removed. `PRD.md` and `FIRST_PRINCIPLES.md` are now on-demand rows in the routing table (\"grep/slice, never whole; never auto-load\"). Estimated entry-file floor: **~11.7k \u2192 ~0.6k tokens per session (~95% cut), paid on every turn of every session.**\n2. **Quick-reference duplication moved down** \u2192 `domains/ROUTING_QUICK_REFERENCE.md` (12.7 KB, verbatim), loaded only for cross-domain edge cases, with a grep-the-provision instruction.\n3. **All three domain monoliths split by their real heading seams** into `SEVERITY.md` / `SLA.md` / `ESCALATION.md` / `REMEDIATION.md` per domain (12 files). Content verified **byte-identical** (non-header lines diffed; provision counts 43/26/23 preserved). Each `CONTEXT.md` is now a \u226410-line catalog (362\u2013421 B) with per-file sizes. Typical stage load drops from ~7.5k tokens (tech-ops whole file) to ~1.6\u20132.1k (one topic file) \u2014 inside the 2\u20138k budget.\n4. **Routing table rebuilt with per-task rows** \u2014 every row names the exact file (e.g. intake loads `domains/<domain>/SEVERITY.md`, verify loads `schemas/<domain>/incident.schema.yaml`), plus the discipline rules: domain-first path derivation, measure-before-read, never re-read, model-per-stage (`/model`: cheapest for intake/verify, mid for analyze/remediate).\n5. **`02-analyze/MODULES.md` created** (963 B): one line per module with purpose, entry point, and size for all 7 modules under `src/` \u2014 code loads are now mapped and sliced instead of browsed.\n6. **State pattern installed** \u2014 `incidents/_templates/STATE.md` (\u226440-line handoff template with a files-consulted section) and `PROMPTS.md` (the four fresh-session stage-start prompts plus the load-report format). Each stage's `CONTEXT.md` now ends with the contract: update STATE.md, emit load report, stop; next stage in a fresh session. `01-intake` and `02-analyze` contracts were also re-pointed at `SEVERITY.md` / `MODULES.md` instead of \"the domain context\" / \"src/\".\n7. **`.mcp.json` pruned to zero servers** (evidence: no pipeline reference to any of the four). Restore any individual server from `_audit/originals/mcp.json.bak` the day a stage genuinely calls it.\n8. **`_audit/BASELINE.md` written** with the pre-fix numbers and the owner measurement TODOs.\n9. **Re-ran the mechanical audit: 0 structural flags remain** (was 8 flag groups).\n\nRollback: everything original is in `_audit/originals/` (`CLAUDE.md.bak`, `CONTEXT.<domain>.md.bak`, `mcp.json.bak`); the split files contain the monolith content verbatim.\n\n## Expected impact (estimates \u2014 claim nothing until `/cost` confirms)\n\n| Leak | Before (est.) | After (est.) |\n|---|---|---|\n| Entry files auto-loaded per session (F1+F4) | ~46.7 KB \u2248 11.7k tok | ~2.4 KB \u2248 0.6k tok |\n| MCP schemas in floor (F2) | 4 servers | 0 (measure delta via `/context`) |\n| Domain knowledge per stage (F3) | ~4.1\u20137.5k tok (whole file) | ~1.1\u20132.1k tok (one topic file) |\n| Cross-stage history (F5) | whole conversation re-sent each turn | \u226440-line STATE.md + stage files |\n\nCompounding matters more than any single row: the floor cut is paid on **every turn of every session**, and stage-per-session stops history from accumulating at all. Directionally this should cut billed input per incident by well over half \u2014 but per the skill's rule, no dollar figure is promised until step 6 (re-measure) produces one.\n\n## What you should measure now (owner instructions \u2014 commands unavailable to this agent)\n\n1. **Floor:** fresh session in the workspace \u2192 `/context` \u2192 record total and the MCP/CLAUDE.md breakdown into `_audit/BASELINE.md` (an \"after\" line). If you have a pre-fix copy of the workspace, do the same there for a true before/after.\n2. **Per-incident cost:** run one representative incident through the four fresh-session prompts in `PROMPTS.md` (use `/clear` between stages) \u2192 record `/cost` per stage and each stage's load report into `_audit/RESULTS.md`.\n3. **Volume:** Console usage page \u2192 sessions/day, tokens/day per model, cache hit rate.\n4. **Behavior check:** if the drop is small, the residue is almost always session shape \u2014 confirm stages are actually being run as separate sessions, not four messages in one chat.\n5. **Billing plan (F7):** compare your measured monthly spend against current Pro/Max pricing at anthropic.com/pricing.\n\n## Files I read\n\nWorkspace files (`/home/claude/testbed/icm-ws-A/`):\n- `CLAUDE.md` \u2014 read in full (required to rewrite it and relocate its content)\n- `PRD.md`, `FIRST_PRINCIPLES.md` \u2014 entered context in full via CLAUDE.md's `@`-imports the moment CLAUDE.md was opened (the F1 leak, demonstrated on this very session); not deliberately opened\n- `.mcp.json` \u2014 read in full\n- `01-intake/CONTEXT.md`, `01-intake/INTAKE_TEMPLATE.md`, `02-analyze/CONTEXT.md`, `03-verify/CONTEXT.md`, `04-remediate/CONTEXT.md` \u2014 read in full (each \u2264292 B)\n- `package.json` \u2014 read in full\n- `domains/tech-ops/CONTEXT.md`, `domains/customer-support/CONTEXT.md`, `domains/manufacturing/CONTEXT.md` \u2014 **headings only** (`grep -n '^#'`); bodies were split and verified by script without entering context\n- `src/api-gateway/index.js`, `src/api-gateway/routes.js`, `src/auth/index.js`, `src/inventory/tracker.js`, `src/load-balancer/health-check.js`, `src/load-balancer/pool.js`, `src/notifications/dispatcher.js`, `src/payments/gateway.js`, `src/shared/emitter.js` \u2014 **first 2 lines only** (header comments, for MODULES.md purposes)\n- Sizes/existence checked only, contents never read: `schemas/**`, `domains/*/config.yaml`, `~/.claude/CLAUDE.md` (absent)\n\nSkill files (listed separately): `/home/claude/icm-token-discipline/SKILL.md`, `references/audit.md`, `references/mechanics.md`, `references/templates.md` (`scripts/icm_audit.sh` was executed, not read).\n"}], "eval-0-audit-without_skill": [{"name": "AUDIT_REPORT.md", "type": "text", "content": "# Token-Discipline Audit \u2014 ICM Workspace (icm-ws-B)\n\nDate: 2026-08-21\nWorkspace: /home/claude/testbed/icm-ws-B\nSymptom: $25\u201330/day API spend on mostly-Haiku Claude Code sessions.\n\n## Summary\n\nThe workspace forced roughly **21\u201330K tokens of fixed overhead into every session before any work\nstarted**: a 13.3 KB CLAUDE.md that `@`-imported another 33.4 KB (PRD.md + FIRST_PRINCIPLES.md), plus\nfour MCP servers whose tool schemas load into every session and which nothing in the workflow uses\n(one of them misconfigured and broken). On top of that, every incident stage loaded a whole 16\u201330 KB\ndomain context file when it needed only one quarter of it. Because Claude Code resends the entire\ncontext on every API turn, fixed overhead is paid per **turn**, not per session \u2014 this profile easily\nexplains a $25\u201330/day bill on Haiku.\n\nAll of it was fixable in place. Auto-loaded workspace memory is now **1,692 bytes (was 46,749 \u2014 a 96%\nreduction)**, MCP servers are parked (0 auto-started, was 4), and domain contexts are split so each\nstage loads only its section. **No content was deleted** \u2014 everything was moved to on-demand files,\nand the domain splits were verified byte-exact before the originals were replaced.\n\n## How the leak works (mechanics)\n\n1. **CLAUDE.md auto-loads.** Claude Code injects the project CLAUDE.md into the system context of\n   every session, and any `@file` line in it recursively injects that file's full contents too.\n2. **MCP tool schemas auto-load.** Every server in `.mcp.json` is started per session and every tool\n   it advertises adds its name + description + JSON schema to the context \u2014 whether or not any tool\n   is ever called.\n3. **Context is resent every turn.** A 25K-token fixed preamble in a 20-turn session is ~500K input\n   tokens of exposure. Prompt caching softens this (cache reads are ~10\u00d7 cheaper on Haiku) but the\n   cache has a 5-minute TTL, writes cost 1.25\u00d7, and every fresh session re-pays the write \u2014 so bloat\n   still dominates on many short sessions, which is exactly this workspace's usage pattern.\n4. **Bloat compounds.** A fat preamble reaches the auto-compact threshold sooner; compaction is\n   itself a large model call and typically triggers re-reading of files, multiplying the waste.\n\n## Findings\n\n### F1 \u2014 CLAUDE.md `@`-imports PRD.md and FIRST_PRINCIPLES.md (severity: critical)\n`CLAUDE.md` lines 3\u20134 were `@PRD.md` and `@FIRST_PRINCIPLES.md`. PRD.md is 23,791 B (34 boilerplate\n\"product requirement\" provisions) and FIRST_PRINCIPLES.md is 9,612 B (14 provisions). Both were\npulled, in full, into every session \u2014 ~8.3K tokens \u2014 although intake/verify/remediate tasks almost\nnever need them. (Confirmed live: reading CLAUDE.md in this audit auto-injected both files.)\n\n### F2 \u2014 CLAUDE.md body is 87% duplicated boilerplate (severity: critical)\nOf CLAUDE.md's 13,346 B, ~11.6 KB was 18 \"quick reference\" provisions (10 severity routing, 8\nescalation routing) self-described as \"duplicated from domain contexts for convenience\". The routing\ntable already tells each stage to load the domain context, so this content was paid for twice.\nCaveat found during the audit: the blocks are near-duplicates but carry distinct metric namespaces\n(`ops.severity_routing.pN` vs the domains' `ops.<domain>_severity.pN`), so they were preserved\nverbatim rather than deleted (see Fix 2).\n\n### F3 \u2014 Four MCP servers auto-start; none are used; one is broken (severity: critical)\n`.mcp.json` configured `github`, `postgres`, `figma`, and `browser` servers. A grep across the whole\nworkspace found no workflow, doc, or code reference to any of them. The GitHub server alone\nadvertises ~25+ tools (typically ~10K+ tokens of schemas); figma/browser add more. The `postgres`\nentry is broken regardless: `@modelcontextprotocol/server-postgres` requires a database connection\nURL argument that was never provided, so it fails at startup (startup noise, zero value).\n\n### F4 \u2014 Monolithic domain contexts force 4\u00d7 over-reads per stage (severity: high)\nEach domain CONTEXT.md (tech-ops 29,813 B, customer-support 18,646 B, manufacturing 16,345 B) holds\nfour independent sections: Severity mappings, SLA rules, Escalation paths, Remediation workflows.\nIntake needs only severity; remediation needs only remediation + escalation. The routing table said\n\"load domains/[domain]/CONTEXT.md\", so every stage read the whole file (~4\u20137.5K tokens), and a\nsession that touches intake and remediation read it twice-over across turns.\n\n### F5 \u2014 No guidance telling sessions to stay lean (severity: medium)\nNothing in the workspace told a session to avoid re-reading the big reference docs or to read only\nthe relevant section. On Haiku, which follows explicit instructions better than implicit norms, the\nabsence of a stated loading policy costs real tokens.\n\n### Checked and found clean\n- No `.claude/` directory in the workspace: no hooks, output styles, commands, skills, or\n  settings.json leaks at project level. No nested CLAUDE.md files below the root.\n- Stage contexts (01\u201304) are tiny (90\u2013141 B) and well-designed; INTAKE_TEMPLATE.md is 8 lines.\n- `src/` (9 files, largest 4,751 B) and `schemas/` (4 files, \u2264431 B) are small; `package.json` is\n  85 B. Not a git repo (no hook/status overhead). Sibling workspaces (icm-ws-A/C/D, fixture) were\n  out of scope and untouched.\n\n## Fixes made\n\n### Fix 1 \u2014 Rewrote CLAUDE.md lean, removed both `@`-imports (F1, F2, F5)\n- New `CLAUDE.md` is **1,692 B (~420 tokens; was 13,346 B + 33,403 B imported \u2248 46,749 B, ~11.7K\n  tokens)**. It keeps: identity, the routing table (updated to point at the new split files), the\n  normative notes (follow FIRST_PRINCIPLES.md; plant calendar; SLA matrix), and adds a 3-line\n  \"Token discipline\" policy (load only the file the routing table names; never preload PRD/\n  FIRST_PRINCIPLES; prefer grep/targeted reads).\n- PRD.md and FIRST_PRINCIPLES.md are now **referenced as read-on-demand pointers**, not imported.\n  The files themselves are untouched.\n\n### Fix 2 \u2014 Moved the 18 quick-reference provisions to `docs/routing-quick-reference.md` (F2)\nExtracted verbatim (12,771 B) with a provenance header. Nothing lost; it simply no longer rides\nalong in every session.\n\n### Fix 3 \u2014 Parked all four MCP servers (F3)\n- `.mcp.json` is now `{\"mcpServers\": {}}`.\n- Original config preserved in `docs/MCP_SERVERS.md` with per-server re-enable instructions, the\n  missing-connection-URL fix for postgres, and a recommendation to use the `gh` CLI via Bash\n  (zero context cost) instead of the GitHub MCP server for occasional PR/issue work.\n\n### Fix 4 \u2014 Split every domain context into per-section files (F4)\nFor each of tech-ops, customer-support, manufacturing:\n- Created `severity.md`, `sla.md`, `escalation.md`, `remediation.md` (verbatim splits; reassembly\n  **verified byte-exact against the originals** before replacement).\n- Replaced `CONTEXT.md` with a ~500 B index so the old path still works and now costs ~130 tokens\n  instead of 4\u20137.5K. Example stage load now: tech-ops intake reads `severity.md` (8,311 B \u2248 2.1K\n  tokens) instead of 29,813 B (~7.5K tokens).\n\n### Fix 5 \u2014 Pointed stage contexts at the split files (F4, F5)\n`01-intake/CONTEXT.md` now names `domains/[domain]/severity.md` (sla.md only if the clock matters);\n`04-remediate/CONTEXT.md` names `remediation.md` + `escalation.md`. 02-analyze and 03-verify were\nalready precise and are unchanged.\n\n### Rollback\nAll moves are reversible: quick reference is in `docs/routing-quick-reference.md`; MCP config is in\n`docs/MCP_SERVERS.md`; a full domain context is reproduced by concatenating its four section files\n(they were split byte-exactly). If any external automation expects the old full-text\n`domains/*/CONTEXT.md`, point it at the section files or concatenate them.\n\n## Expected impact\n\nPer-session fixed overhead (loaded before any user request):\n\n| Component | Before | After |\n|---|---|---|\n| CLAUDE.md + imports | 46,749 B \u2248 ~11.7K tokens | 1,692 B \u2248 ~0.4K tokens |\n| MCP tool schemas (4 servers) | ~10K+ tokens (est.; GitHub server alone ~25+ tools) | 0 |\n| **Total controllable overhead** | **~21\u201330K tokens** | **~0.4K tokens (\u224898% less)** |\n\nPer-stage on-demand loads: 4\u20137.5K tokens per domain-context read \u2192 0.9\u20132.1K per section read\n(~70\u201375% less), and the intake/remediate stages no longer drag unrelated sections through\ncompaction.\n\nRough daily math (illustrative; Haiku 4.5 at $1/MTok input, $0.10 cache-read, $1.25 cache-write,\n$5/MTok output; assume ~25 sessions \u00d7 ~20 turns/day): the removed ~21\u201330K-token preamble cost\nbetween ~$2/day (ideal cache behavior) and ~$10+/day (cold caches, short gaps > 5 min), plus\nsecond-order savings from later/rarer auto-compaction and smaller per-stage reads. **Expect roughly\na 40\u201370% reduction in daily spend for this usage pattern** \u2014 but verify by measurement (below)\nrather than trusting the estimate; the exact share depends on session count, turn count, and cache\nhit rates.\n\n## What the owner should do next (not runnable in this environment)\n\nMeasure (before/after comparison on the real setup):\n1. In a fresh session in the workspace, run `/context` \u2014 record \"Memory files\" and \"MCP tools\"\n   sizes. Memory should now be well under 1K tokens and MCP tools 0.\n2. Run `/cost` at the end of a few typical incident sessions; compare to a pre-fix day.\n3. Run `claude mcp list` to confirm no servers auto-start (also check `~/.claude.json` for\n   user-scope servers this audit could not see).\n4. Watch the Console usage dashboard day-over-day for a week.\n\nCheck the parts that live outside this workspace copy:\n5. `~/.claude/CLAUDE.md` (user memory) is injected into **every project's** sessions \u2014 audit it the\n   same way; keep it a few hundred bytes of pointers.\n6. Claude Code also walks parent directories: make sure no CLAUDE.md sits above the workspace\n   (e.g. in /home/claude/testbed/) on the real machine.\n7. Check `~/.claude/settings.json` / enterprise settings for hooks that print large outputs\n   (anything echoed by a hook enters context every time it fires).\n\nHabits that keep Haiku sessions cheap:\n8. One incident per session; `/clear` between unrelated tasks instead of continuing a long session\n   (context is resent every turn and never shrinks on its own).\n9. Don't paste raw log dumps; save to a file and grep the relevant lines into context.\n10. If a session must consult PRD.md or the quick reference, read the specific section, not the file\n    tree of references.\n\n## Files I read\n\nFull contents read during this audit (all under /home/claude/testbed/icm-ws-B/):\n1. /home/claude/testbed/icm-ws-B/CLAUDE.md (original, pre-fix)\n2. /home/claude/testbed/icm-ws-B/PRD.md (auto-injected in full via CLAUDE.md `@`-import \u2014 itself a demonstration of finding F1)\n3. /home/claude/testbed/icm-ws-B/FIRST_PRINCIPLES.md (auto-injected the same way)\n4. /home/claude/testbed/icm-ws-B/.mcp.json (original, pre-fix)\n5. /home/claude/testbed/icm-ws-B/01-intake/CONTEXT.md (original, pre-fix)\n6. /home/claude/testbed/icm-ws-B/01-intake/INTAKE_TEMPLATE.md\n7. /home/claude/testbed/icm-ws-B/02-analyze/CONTEXT.md\n8. /home/claude/testbed/icm-ws-B/03-verify/CONTEXT.md\n9. /home/claude/testbed/icm-ws-B/04-remediate/CONTEXT.md (original, pre-fix)\n10. /home/claude/testbed/icm-ws-B/package.json\n11. /home/claude/testbed/icm-ws-B/domains/tech-ops/CONTEXT.md (original, pre-fix)\n12. /home/claude/testbed/icm-ws-B/domains/customer-support/CONTEXT.md (original, pre-fix)\n13. /home/claude/testbed/icm-ws-B/domains/manufacturing/CONTEXT.md (original, pre-fix)\n14. /home/claude/testbed/icm-ws-B/domains/tech-ops/config.yaml\n15. /home/claude/testbed/icm-ws-B/domains/customer-support/config.yaml\n16. /home/claude/testbed/icm-ws-B/domains/manufacturing/config.yaml\n\nScanned only (file listings, byte counts, heading/pattern greps \u2014 contents not loaded): the nine\nfiles under src/, the four files under schemas/, and directory listings of the workspace and\n/home/claude/testbed/. Files I created or rewrote (new CLAUDE.md, .mcp.json,\ndocs/routing-quick-reference.md, docs/MCP_SERVERS.md, domains/*/{CONTEXT.md,severity.md,sla.md,\nescalation.md,remediation.md}, 01-intake/CONTEXT.md, 04-remediate/CONTEXT.md) were verified via\ntool output and size/diff checks rather than re-reads.\n"}], "eval-1-intake-with_skill": [{"name": "STAGE_OUTPUT.md", "type": "text", "content": "# Stage 01-intake \u2014 INC-2026-001\n\n## Classification (stage output)\n\n| Field | Value |\n|---|---|\n| id | INC-2026-001 |\n| domain | **tech-ops** |\n| severity | **critical (SEV1)** |\n| customer_facing | yes |\n| started_at | 2026-08-21T06:27Z (~10 min before intake at 06:37Z) |\n| oncall routing | platform-oncall / pager PD-TECHOPS / sla_clock 24x7 |\n\n**Domain rationale.** \"API gateway returning 503 errors\" on production traffic is a platform/infrastructure failure \u2014 tech-ops. It is not a support-ticket matter (customer-support) nor plant-floor (manufacturing). Domain was resolved from the incident description alone before loading anything domain-specific; every subsequent path derived from `domains/tech-ops/` only (skill rule 2).\n\n**Severity rationale.** Production + customer-facing + revenue path (checkout) + hard failures (503s), ongoing \u2192 highest severity. Honesty note: the 12 \"Tech-ops severity\" provisions in `domains/tech-ops/CONTEXT.md` (lines 3\u201339, the section the intake procedure points at) are identical boilerplate with no discriminating thresholds, so the classification rests on the blast-radius facts above rather than on a workspace-defined matrix.\n\n**Signal handed to 02-analyze.** Upstreams report healthy while the gateway 503s \u2192 suspect the gateway/load-balancer layer (health-check or routing), not upstream services.\n\n## Recorded in workspace\n\n- `incidents/INC-2026-001/intake.md` \u2014 filled per `01-intake/INTAKE_TEMPLATE.md`\n- `incidents/INC-2026-001/STATE.md` \u2014 29-line handoff (skill template): findings, open questions, files-consulted list\n\n**Stage 01-intake is done.** Per the skill's one-stage-per-session rule, run 02-analyze after `/clear` (or a fresh session): load `incidents/INC-2026-001/STATE.md` + `02-analyze/MODULES.md` (create from the skill's template if missing \u2014 it is missing) and nothing else. Intake was mechanical \u2014 the cheapest model tier suffices for stages 1 and 3.\n\n## Load report\n\n```\nLoad report (estimates; /context and /cost have real numbers):\n- 01-intake/CONTEXT.md                  0.14 KB   ~35 tok\n- 01-intake/INTAKE_TEMPLATE.md          0.29 KB   ~73 tok\n- domains/tech-ops/CONTEXT.md           8.3 KB    ~2,085 tok (sliced: lines 1-40 of 29.8 KB \u2014 severity section only)\n- domains/tech-ops/config.yaml          0.07 KB   ~19 tok\n- grep/file-map command output          ~1.7 KB   ~430 tok (CLAUDE.md + tech-ops headings, workspace size map)\nStage total: ~2.6k tokens loaded (budget 2-8k OK). Session floor is separate \u2014 check /context.\n```\n\nFloor note (composition fact, not a savings promise): `CLAUDE.md` `@imports` `PRD.md` and `FIRST_PRINCIPLES.md`, so ~46.7 KB (~11.7k tok est.) auto-loads into every session in this workspace before any stage work begins \u2014 several times the whole stage's read total, and its severity/escalation \"quick reference\" duplicates domain content as filler. This workspace appears never audited: I can run the skill's audit (`scripts/icm_audit.sh` + course-correction) on request \u2014 say the word.\n\nNot loaded, deliberately: PRD.md and FIRST_PRINCIPLES.md (never opened by me \u2014 they entered context only via the harness's CLAUDE.md auto-injection), the other 21.5 KB of `domains/tech-ops/CONTEXT.md` (SLA/escalation \u2014 later stages' concern), other domains, `schemas/` (03-verify's load), all of `src/`, other stage folders.\n\n## Files I read\n\nWorkspace (`/home/claude/testbed/icm-ws-C/`):\n- `01-intake/CONTEXT.md` (full, 141 B)\n- `01-intake/INTAKE_TEMPLATE.md` (full, 292 B)\n- `domains/tech-ops/CONTEXT.md` (partial: heading grep + lines 1\u201340 only, 8.3 KB of 29.8 KB)\n- `domains/tech-ops/config.yaml` (full, 75 B)\n- `CLAUDE.md` (heading grep only; its full content plus `@PRD.md` and `@FIRST_PRINCIPLES.md` were auto-injected into context by the harness as the session floor \u2014 I never opened PRD.md or FIRST_PRINCIPLES.md myself)\n\nSkill files (`/home/claude/icm-token-discipline/`):\n- `SKILL.md` (full, 6.6 KB)\n- `references/templates.md` (full, 4.1 KB \u2014 STATE.md + load-report formats)\n"}], "eval-1-intake-without_skill": [{"name": "STAGE_OUTPUT.md", "type": "text", "content": "# 01-intake stage output \u2014 INC-2026-0001\n\n## Incident\n\"API gateway returning 503 errors. Started 10 minutes ago. Affecting production checkout traffic. Upstream service dashboards look healthy.\"\n\n## Classification\n\n| Field | Value |\n|---|---|\n| id | INC-2026-0001 |\n| domain | **tech-ops** |\n| severity | **critical** |\n| customer_facing | yes |\n| opened_at | 2026-08-21T06:37:00Z |\n| started_at | ~2026-08-21T06:27:00Z (10 min before report; UTC clock per schemas/common/id-format.yaml) |\n| affected_modules (initial) | api-gateway |\n| oncall / pager | platform-oncall / PD-TECHOPS (domains/tech-ops/config.yaml) |\n\n## Reasoning\n\n- **Domain = tech-ops.** The failing component is the API gateway \u2014 platform infrastructure (`src/api-gateway/` in the codebase) \u2014 not a support-workflow (customer-support) or plant/production-line (manufacturing) issue. Routed per the CLAUDE.md routing table: \"Classify incident severity \u2192 01-intake \u2192 load domains/[domain]/CONTEXT.md\"; classification procedure per 01-intake/INTAKE_TEMPLATE.md (identify domain, then apply that domain's severity mappings).\n- **Severity = critical.** The tech-ops severity vocabulary is `[low, medium, high, critical]` (schemas/tech-ops/incident.schema.yaml). This is an active production outage: 503 responses on the checkout path \u2014 customer-facing, revenue-impacting, on a 24x7 SLA clock (domains/tech-ops/config.yaml). A hard failure of the primary revenue journey maps to the top severity tier.\n- **Blast radius confirmed before acting** (per the severity-routing provisions in CLAUDE.md and domains/tech-ops/CONTEXT.md): production checkout traffic is affected; upstream service dashboards are healthy, which localizes the fault to the gateway layer itself. Candidate modules for 02-analyze: `src/api-gateway`, and the `src/load-balancer` health-check path (healthy-upstream + gateway 503 is a common LB/health-check misclassification signature). Analysis is deliberately deferred \u2014 this run executes 01-intake only.\n\n## Recorded in workspace\n\n- Intake record created at: `/home/claude/testbed/icm-ws-D/01-intake/INC-2026-0001.md`, following 01-intake/INTAKE_TEMPLATE.md fields (id INC-YYYY-NNNN format per schemas/common/id-format.yaml) plus the stage's required output (classification), with schema-aligned fields (domain, severity, opened_at, summary, affected_modules, customer_impact) for downstream 03-verify validation.\n- Handoff: route to 02-analyze; page PD-TECHOPS.\n\n## Files I read\n\n1. /home/claude/testbed/icm-ws-D/CLAUDE.md\n2. /home/claude/testbed/icm-ws-D/PRD.md (auto-loaded via CLAUDE.md @-import)\n3. /home/claude/testbed/icm-ws-D/FIRST_PRINCIPLES.md (auto-loaded via CLAUDE.md @-import)\n4. /home/claude/testbed/icm-ws-D/01-intake/CONTEXT.md\n5. /home/claude/testbed/icm-ws-D/01-intake/INTAKE_TEMPLATE.md\n6. /home/claude/testbed/icm-ws-D/domains/tech-ops/CONTEXT.md\n7. /home/claude/testbed/icm-ws-D/domains/tech-ops/config.yaml\n8. /home/claude/testbed/icm-ws-D/schemas/tech-ops/incident.schema.yaml\n9. /home/claude/testbed/icm-ws-D/schemas/common/id-format.yaml\n"}]}, "benchmark": {"metadata": {"skill_name": "icm-token-discipline", "skill_path": "<path/to/skill>", "executor_model": "<model-name>", "analyzer_model": "<model-name>", "timestamp": "2026-08-21T07:02:53Z", "evals_run": [2, 3, 4], "runs_per_configuration": 3}, "runs": [{"eval_id": 2, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 424.8, "tokens": 91946, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Identifies root AGENTS.md as per-session floor cost with measured size", "passed": true, "evidence": "22.5 KB / ~5.6k tokens auto-loaded every session; noted ~80% is subtree/task-specific."}, {"text": "Findings quantified in real bytes/tokens, not vibes", "passed": true, "evidence": "Byte/token figures throughout (22.5KB AGENTS.md, 177KB app-server README, 20-51KB prompt-doc belt); floor cut estimated -49% to -89% by session type."}, {"text": "Zero modifications to existing project files (verified by diff vs pristine clone)", "passed": true, "evidence": "diff -rq vs pristine clone: no changes, no additions inside the repo \u2014 all 6 proposal files kept outside in outputs/proposals/."}, {"text": "No foreign ICM structure imposed on the real repo", "passed": true, "evidence": "Report states stage folders/domains/STATE.md were not imposed; audit targets what exists. Confirmed no such files added."}, {"text": "Delivers a crate/module map to cut exploration-transcript costs", "passed": true, "evidence": "Script-generated CRATE_MAP.md proposal covering the ~102-crate workspace."}, {"text": "Prescribes /context + /cost measurement; estimates labeled as estimates", "passed": true, "evidence": "Measurement plan for the team; 'all numbers are labeled estimates pending that measurement'."}, {"text": "Finds leaks beyond static files (mandated read paths / transcript noise)", "passed": true, "evidence": "Caught 177KB README sitting on a mandated read path with no slicing rule; skills duplication invisible to Claude Code."}], "notes": []}, {"eval_id": 3, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 170.4, "tokens": 55336, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Names res.send in lib/response.js (~lines 185-191) as the set point", "passed": true, "evidence": "response.js:126 send, header set 185-191 \u2014 matches ground truth (162-189)."}, {"text": "Names compileETag (lib/utils.js:130) and the app.set 'etag'->'etag fn' trigger", "passed": true, "evidence": "utils.js:130 compileETag; application.js 363-366 trigger. Matches."}, {"text": "States default 'weak' from lib/application.js defaultConfiguration (line 95)", "passed": true, "evidence": "application.js:95 'weak' default stated."}, {"text": "Gives the full condition set (no existing ETag, etag fn is function, body defined, no Transfer-Encoding)", "passed": true, "evidence": "All four conditions plus generator-returns-truthy."}, {"text": "Covers the sendFile/static delegation path (response.js:402 boolean toggle)", "passed": true, "evidence": "response.js:402 delegation to send/serve-static noted."}, {"text": "All large files sliced (none >8KB read whole), disclosed per file", "passed": true, "evidence": "Load table: response.js 3.9KB of 25.1KB; utils/application sliced; request.js/express.js grep-only, never opened."}, {"text": "Formal load report: per-file token estimates + total checked against budget", "passed": true, "evidence": "Full table with bytes + est tokens, total ~3.97k vs 8k budget, no-re-read statement."}], "notes": []}, {"eval_id": 4, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 222.9, "tokens": 62209, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Names run_command in src/flask/cli.py with --host/--port defaults 127.0.0.1:5000 (lines 883-884)", "passed": true, "evidence": "cli.py 882-884, defaults exact."}, {"text": "Explains FLASK_RUN_HOST/FLASK_RUN_PORT via auto_envvar_prefix='FLASK' (cli.py:585)", "passed": true, "evidence": "FlaskGroup.__init__ cli.py:585 mechanism explained."}, {"text": "Covers dotenv chain (--env-file > .env > .flaskenv) and FLASK_SKIP_DOTENV", "passed": true, "evidence": "Full precedence incl. _env_file_callback and helpers.py:36."}, {"text": "Clarifies SERVER_NAME only affects Flask.run(), which FLASK_RUN_FROM_CLI no-ops under the CLI", "passed": true, "evidence": "app.py:721-740 + cli.py:667 no-op explained."}, {"text": "Traces the handoff to werkzeug run_simple (cli.py:983)", "passed": true, "evidence": "run_simple at cli.py:983."}, {"text": "All large files sliced (none >8KB read whole), disclosed per file", "passed": true, "evidence": "cli.py 342/1127 lines; app.py 46/1628 lines; helpers.py 13 lines; sizes disclosed per file."}, {"text": "Formal load report: per-file token estimates + total checked against budget", "passed": true, "evidence": "Load report with per-file KB/token figures, ~6.3k total vs 8k budget."}], "notes": []}, {"eval_id": 2, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 701.0, "tokens": 112767, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Identifies root AGENTS.md as per-session floor cost with measured size", "passed": true, "evidence": "22.5 KB / ~5.5k tokens; ~57% irrelevant to most sessions; slim-root + nested files proposed."}, {"text": "Findings quantified in real bytes/tokens, not vibes", "passed": true, "evidence": "Quantified throughout (1.5MB lockfile, 6.8MB fixtures, 10-25k tokens/session test-output waste)."}, {"text": "Zero modifications to existing project files (verified by diff vs pristine clone)", "passed": true, "evidence": "diff -rq vs pristine clone: no modifications; one clearly-marked additions dir (proposals-agent-context-audit/), which was allowed."}, {"text": "No foreign ICM structure imposed on the real repo", "passed": true, "evidence": "No foreign structure imposed (no skill to import one from)."}, {"text": "Delivers a crate/module map to cut exploration-transcript costs", "passed": true, "evidence": "~100-crate module map proposal included."}, {"text": "Prescribes /context + /cost measurement; estimates labeled as estimates", "passed": true, "evidence": "A/B measurement protocol with /context + /cost and >=30% success criterion; savings labeled est."}, {"text": "Finds leaks beyond static files (mandated read paths / transcript noise)", "passed": true, "evidence": "Strong here: verbose `just test` output (~700 PASS lines), giant lockfiles/fixtures with no read guardrails, dangling skill refs."}], "notes": []}, {"eval_id": 3, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.8571, "passed": 6, "failed": 1, "total": 7, "time_seconds": 96.5, "tokens": 51116, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Names res.send in lib/response.js (~lines 185-191) as the set point", "passed": true, "evidence": "response.js:189 identified; funnel paths noted."}, {"text": "Names compileETag (lib/utils.js:130) and the app.set 'etag'->'etag fn' trigger", "passed": true, "evidence": "utils.js:130-152 + application.js:364-366."}, {"text": "States default 'weak' from lib/application.js defaultConfiguration (line 95)", "passed": true, "evidence": "application.js:95 stated."}, {"text": "Gives the full condition set (no existing ETag, etag fn is function, body defined, no Transfer-Encoding)", "passed": true, "evidence": "All conditions present; also correctly noted serve-static ignores the app setting."}, {"text": "Covers the sendFile/static delegation path (response.js:402 boolean toggle)", "passed": true, "evidence": "response.js:402 wiring described precisely."}, {"text": "All large files sliced (none >8KB read whole), disclosed per file", "passed": true, "evidence": "Disclosed slices for all files; read one extra file (request.js 50-line slice) not needed for the answer."}, {"text": "Formal load report: per-file token estimates + total checked against budget", "passed": false, "evidence": "Files-I-read list has line ranges but no byte/token accounting, no total, no budget check."}], "notes": []}, {"eval_id": 4, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.8571, "passed": 6, "failed": 1, "total": 7, "time_seconds": 138.0, "tokens": 55293, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Names run_command in src/flask/cli.py with --host/--port defaults 127.0.0.1:5000 (lines 883-884)", "passed": true, "evidence": "cli.py 883-884, defaults exact."}, {"text": "Explains FLASK_RUN_HOST/FLASK_RUN_PORT via auto_envvar_prefix='FLASK' (cli.py:585)", "passed": true, "evidence": "cli.py:585 mechanism explained."}, {"text": "Covers dotenv chain (--env-file > .env > .flaskenv) and FLASK_SKIP_DOTENV", "passed": true, "evidence": "Full precedence + helpers.get_load_dotenv."}, {"text": "Clarifies SERVER_NAME only affects Flask.run(), which FLASK_RUN_FROM_CLI no-ops under the CLI", "passed": true, "evidence": "app.py 721-740 + cli.py:667."}, {"text": "Traces the handoff to werkzeug run_simple (cli.py:983)", "passed": true, "evidence": "cli.py 983-993."}, {"text": "All large files sliced (none >8KB read whole), disclosed per file", "passed": true, "evidence": "Slices disclosed; also read docs/cli.rst and CHANGES.rst extras not needed for the answer."}, {"text": "Formal load report: per-file token estimates + total checked against budget", "passed": false, "evidence": "Line ranges disclosed but no byte/token accounting, no total, no budget check."}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 272.7, "stddev": 134.3126, "min": 170.4, "max": 424.8}, "tokens": {"mean": 69830.3333, "stddev": 19458.5859, "min": 55336, "max": 91946}}, "without_skill": {"pass_rate": {"mean": 0.9047, "stddev": 0.0825, "min": 0.8571, "max": 1.0}, "time_seconds": {"mean": 311.8333, "stddev": 337.6664, "min": 96.5, "max": 701.0}, "tokens": {"mean": 73058.6667, "stddev": 34451.7871, "min": 51116, "max": 112767}}, "delta": {"pass_rate": "+0.10", "time_seconds": "-39.1", "tokens": "-3228"}}, "notes": []}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

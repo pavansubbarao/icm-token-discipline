@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "icm-token-discipline", "runs": [{"id": "eval-0-audit-with_skill", "prompt": "Audit the ICM incident-management workspace (multi-module Node codebase, 3 domains) for token leaks and course-correct it; bill is $25-30/day on mostly-Haiku sessions. Fix what you can, write AUDIT_REPORT.md.", "eval_id": 0, "outputs": [{"name": "AUDIT_REPORT.md", "type": "text", "content": "# Token-leak audit \u2014 ICM workspace `/home/claude/testbed/icm-ws-A`\n\nDate: 2026-08-21. Mode: course-correction audit per the `icm-token-discipline` skill (mechanical scan via `icm_audit.sh`, then the audit.md procedure). Reported symptom: **$25\u201330/day of metered API spend (~$750\u2013900/month) on mostly-Haiku sessions.**\n\nAll token figures below are **estimates (bytes \u00f7 4) for planning only**. Real numbers come from `/context`, `/cost`, and the Console usage page \u2014 those commands are unavailable to this audit agent, so each measurement is recorded as an owner instruction (see \"What you should measure now\").\n\n---\n\n## Why the bill was high (the mechanics, briefly)\n\nEvery API call re-sends the entire conversation so far \u2014 system prompt, tool/MCP schemas, CLAUDE.md and everything it `@`-imports, every file ever read that session. Prompt caching discounts the repeats (~0.1\u00d7 base) but does not remove them, and the cache re-pays after a few minutes idle. Cheap models with a steady high bill means **input volume is enormous**: session floor \u00d7 sessions/day \u00d7 turns/session \u00d7 history length. This workspace inflated all four factors.\n\n## Findings (ranked by expected impact)\n\n**F1 \u2014 Session floor: ~46.7 KB (~11.7k tokens) of workspace files auto-loaded into every session.**\n`CLAUDE.md` was 13,346 B (76 lines) and `@`-imported `PRD.md` (23,791 B) and `FIRST_PRINCIPLES.md` (9,612 B). All three rode into *every* session before any work started, and were re-sent (cache-discounted) on *every* turn. This alone is 1.5\u20136\u00d7 the entire 2\u20138k per-stage budget, paid as overhead each session. (Demonstrated live: merely opening CLAUDE.md caused both imports to be injected into this audit session's context.)\n\n**F2 \u2014 Four MCP servers configured, zero used.** `.mcp.json` declared `github`, `postgres`, `figma`, `browser`. A workspace-wide search found **no reference to any of them** in any stage, domain, schema, or source file. Every server's full tool schema loads into every session's floor, used or not \u2014 typically thousands of tokens per server (measure the real delta with `/context`).\n\n**F3 \u2014 Domain CONTEXT monoliths loaded whole.** `domains/tech-ops/CONTEXT.md` 29,813 B (~7.5k tok), `customer-support` 18,646 B (~4.7k tok), `manufacturing` 16,345 B (~4.1k tok) \u2014 each a four-topic file (severity / SLA / escalation / remediation), and the routing table pointed intake **and** remediation at the whole file. Classifying one tech-ops incident loaded ~7.5k tokens to use ~2k of them, then re-billed the rest every remaining turn.\n\n**F4 \u2014 ~10.5 KB of duplicated content inside CLAUDE.md.** A \"Severity/Escalation quick reference (duplicated from domain contexts for convenience)\" \u2014 duplication paid at floor rates in every session, on top of the domain files it duplicated.\n\n**F5 \u2014 No state pattern \u2192 session shape was the multiplier.** No `incidents/*/STATE.md`, no stage-start prompts. Without a handoff file, multi-stage incidents necessarily run as one long conversation, where turn N re-sends stages 1..N\u22121 in full. Per the skill's worked example (15k floor, 4 stages, ~3 turns each): one conversation bills on the order of 300\u2013400k input-token-equivalents vs ~150\u2013200k for four fresh sessions with a 40-line STATE.md handoff \u2014 and the gap widens every extra turn. **This, multiplied by F1's floor, is the most likely core of the $25\u201330/day.**\n\n**F6 \u2014 No module map.** `02-analyze` said \"pull relevant modules from src/\" with no `MODULES.md`, inviting unmapped browsing of the source tree into context.\n\n**F7 \u2014 Billing plan (administrative, potentially the largest single lever).** $25\u201330/day metered \u2248 $750\u2013900/month. Claude Code also runs on flat-rate Pro/Max subscriptions with usage limits. Whether one beats metered at your volume depends on current pricing \u2014 compare at anthropic.com/pricing against your Console usage page. This changes what a token *costs* instead of how many are spent, and for sustained daily use it can outweigh every structural fix combined.\n\nNot a problem: stage-folder files were already lean (90\u2013292 B), schemas small (~430 B), no user-level `~/.claude/CLAUDE.md`.\n\n---\n\n## Fixes made (all verified; originals preserved in `_audit/originals/*.bak`)\n\n1. **CLAUDE.md rewritten as a pure routing catalog** \u2014 13,346 B / 76 lines \u2192 **2,369 B / 34 lines**; both `@`-imports removed. `PRD.md` and `FIRST_PRINCIPLES.md` are now on-demand rows in the routing table (\"grep/slice, never whole; never auto-load\"). Estimated entry-file floor: **~11.7k \u2192 ~0.6k tokens per session (~95% cut), paid on every turn of every session.**\n2. **Quick-reference duplication moved down** \u2192 `domains/ROUTING_QUICK_REFERENCE.md` (12.7 KB, verbatim), loaded only for cross-domain edge cases, with a grep-the-provision instruction.\n3. **All three domain monoliths split by their real heading seams** into `SEVERITY.md` / `SLA.md` / `ESCALATION.md` / `REMEDIATION.md` per domain (12 files). Content verified **byte-identical** (non-header lines diffed; provision counts 43/26/23 preserved). Each `CONTEXT.md` is now a \u226410-line catalog (362\u2013421 B) with per-file sizes. Typical stage load drops from ~7.5k tokens (tech-ops whole file) to ~1.6\u20132.1k (one topic file) \u2014 inside the 2\u20138k budget.\n4. **Routing table rebuilt with per-task rows** \u2014 every row names the exact file (e.g. intake loads `domains/<domain>/SEVERITY.md`, verify loads `schemas/<domain>/incident.schema.yaml`), plus the discipline rules: domain-first path derivation, measure-before-read, never re-read, model-per-stage (`/model`: cheapest for intake/verify, mid for analyze/remediate).\n5. **`02-analyze/MODULES.md` created** (963 B): one line per module with purpose, entry point, and size for all 7 modules under `src/` \u2014 code loads are now mapped and sliced instead of browsed.\n6. **State pattern installed** \u2014 `incidents/_templates/STATE.md` (\u226440-line handoff template with a files-consulted section) and `PROMPTS.md` (the four fresh-session stage-start prompts plus the load-report format). Each stage's `CONTEXT.md` now ends with the contract: update STATE.md, emit load report, stop; next stage in a fresh session. `01-intake` and `02-analyze` contracts were also re-pointed at `SEVERITY.md` / `MODULES.md` instead of \"the domain context\" / \"src/\".\n7. **`.mcp.json` pruned to zero servers** (evidence: no pipeline reference to any of the four). Restore any individual server from `_audit/originals/mcp.json.bak` the day a stage genuinely calls it.\n8. **`_audit/BASELINE.md` written** with the pre-fix numbers and the owner measurement TODOs.\n9. **Re-ran the mechanical audit: 0 structural flags remain** (was 8 flag groups).\n\nRollback: everything original is in `_audit/originals/` (`CLAUDE.md.bak`, `CONTEXT.<domain>.md.bak`, `mcp.json.bak`); the split files contain the monolith content verbatim.\n\n## Expected impact (estimates \u2014 claim nothing until `/cost` confirms)\n\n| Leak | Before (est.) | After (est.) |\n|---|---|---|\n| Entry files auto-loaded per session (F1+F4) | ~46.7 KB \u2248 11.7k tok | ~2.4 KB \u2248 0.6k tok |\n| MCP schemas in floor (F2) | 4 servers | 0 (measure delta via `/context`) |\n| Domain knowledge per stage (F3) | ~4.1\u20137.5k tok (whole file) | ~1.1\u20132.1k tok (one topic file) |\n| Cross-stage history (F5) | whole conversation re-sent each turn | \u226440-line STATE.md + stage files |\n\nCompounding matters more than any single row: the floor cut is paid on **every turn of every session**, and stage-per-session stops history from accumulating at all. Directionally this should cut billed input per incident by well over half \u2014 but per the skill's rule, no dollar figure is promised until step 6 (re-measure) produces one.\n\n## What you should measure now (owner instructions \u2014 commands unavailable to this agent)\n\n1. **Floor:** fresh session in the workspace \u2192 `/context` \u2192 record total and the MCP/CLAUDE.md breakdown into `_audit/BASELINE.md` (an \"after\" line). If you have a pre-fix copy of the workspace, do the same there for a true before/after.\n2. **Per-incident cost:** run one representative incident through the four fresh-session prompts in `PROMPTS.md` (use `/clear` between stages) \u2192 record `/cost` per stage and each stage's load report into `_audit/RESULTS.md`.\n3. **Volume:** Console usage page \u2192 sessions/day, tokens/day per model, cache hit rate.\n4. **Behavior check:** if the drop is small, the residue is almost always session shape \u2014 confirm stages are actually being run as separate sessions, not four messages in one chat.\n5. **Billing plan (F7):** compare your measured monthly spend against current Pro/Max pricing at anthropic.com/pricing.\n\n## Files I read\n\nWorkspace files (`/home/claude/testbed/icm-ws-A/`):\n- `CLAUDE.md` \u2014 read in full (required to rewrite it and relocate its content)\n- `PRD.md`, `FIRST_PRINCIPLES.md` \u2014 entered context in full via CLAUDE.md's `@`-imports the moment CLAUDE.md was opened (the F1 leak, demonstrated on this very session); not deliberately opened\n- `.mcp.json` \u2014 read in full\n- `01-intake/CONTEXT.md`, `01-intake/INTAKE_TEMPLATE.md`, `02-analyze/CONTEXT.md`, `03-verify/CONTEXT.md`, `04-remediate/CONTEXT.md` \u2014 read in full (each \u2264292 B)\n- `package.json` \u2014 read in full\n- `domains/tech-ops/CONTEXT.md`, `domains/customer-support/CONTEXT.md`, `domains/manufacturing/CONTEXT.md` \u2014 **headings only** (`grep -n '^#'`); bodies were split and verified by script without entering context\n- `src/api-gateway/index.js`, `src/api-gateway/routes.js`, `src/auth/index.js`, `src/inventory/tracker.js`, `src/load-balancer/health-check.js`, `src/load-balancer/pool.js`, `src/notifications/dispatcher.js`, `src/payments/gateway.js`, `src/shared/emitter.js` \u2014 **first 2 lines only** (header comments, for MODULES.md purposes)\n- Sizes/existence checked only, contents never read: `schemas/**`, `domains/*/config.yaml`, `~/.claude/CLAUDE.md` (absent)\n\nSkill files (listed separately): `/home/claude/icm-token-discipline/SKILL.md`, `references/audit.md`, `references/mechanics.md`, `references/templates.md` (`scripts/icm_audit.sh` was executed, not read).\n"}], "grading": {"expectations": [{"text": "Flags CLAUDE.md @-imports as every-session floor cost", "passed": true, "evidence": "Report F1: 46.7 KB / ~11.7k tok floor from CLAUDE.md + @PRD.md + @FIRST_PRINCIPLES.md; demonstrated the auto-injection live."}, {"text": "Splits all three domain CONTEXT monoliths with content preserved", "passed": true, "evidence": "29.8/18.6/16.3 KB monoliths split into SEVERITY/SLA/ESCALATION/REMEDIATION; byte-identical verification; slim catalogs left."}, {"text": "Creates a MODULES.md module map (map-before-code enabler)", "passed": true, "evidence": "02-analyze/MODULES.md created; re-run of icm_audit.sh shows section 4 [ok]."}, {"text": "Installs incidents/STATE.md handoff pattern (stage-per-session enabler)", "passed": true, "evidence": "incidents/_templates/STATE.md + PROMPTS.md with four fresh-session stage prompts installed; audit section 5 [ok]."}, {"text": "Attributes cost to session floor + per-turn resend, not just file sizes", "passed": true, "evidence": "Report opens with resend/caching mechanics and the floor x sessions x turns x history decomposition; F5 names session shape as the multiplier."}, {"text": "No headline savings range before measurement; /context + /cost steps prescribed", "passed": true, "evidence": "'no dollar figure is promised until step 6 (re-measure) produces one'; /context, /cost, Console steps written for the owner."}, {"text": "Post-fix workspace passes the mechanical audit script with 0 flags", "passed": true, "evidence": "icm_audit.sh on icm-ws-A after fixes: '0 structural flag group(s)' (was 8 flags pre-fix)."}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}}}, {"id": "eval-0-audit-without_skill", "prompt": "Audit the ICM incident-management workspace (multi-module Node codebase, 3 domains) for token leaks and course-correct it; bill is $25-30/day on mostly-Haiku sessions. Fix what you can, write AUDIT_REPORT.md.", "eval_id": 0, "outputs": [{"name": "AUDIT_REPORT.md", "type": "text", "content": "# Token-Discipline Audit \u2014 ICM Workspace (icm-ws-B)\n\nDate: 2026-08-21\nWorkspace: /home/claude/testbed/icm-ws-B\nSymptom: $25\u201330/day API spend on mostly-Haiku Claude Code sessions.\n\n## Summary\n\nThe workspace forced roughly **21\u201330K tokens of fixed overhead into every session before any work\nstarted**: a 13.3 KB CLAUDE.md that `@`-imported another 33.4 KB (PRD.md + FIRST_PRINCIPLES.md), plus\nfour MCP servers whose tool schemas load into every session and which nothing in the workflow uses\n(one of them misconfigured and broken). On top of that, every incident stage loaded a whole 16\u201330 KB\ndomain context file when it needed only one quarter of it. Because Claude Code resends the entire\ncontext on every API turn, fixed overhead is paid per **turn**, not per session \u2014 this profile easily\nexplains a $25\u201330/day bill on Haiku.\n\nAll of it was fixable in place. Auto-loaded workspace memory is now **1,692 bytes (was 46,749 \u2014 a 96%\nreduction)**, MCP servers are parked (0 auto-started, was 4), and domain contexts are split so each\nstage loads only its section. **No content was deleted** \u2014 everything was moved to on-demand files,\nand the domain splits were verified byte-exact before the originals were replaced.\n\n## How the leak works (mechanics)\n\n1. **CLAUDE.md auto-loads.** Claude Code injects the project CLAUDE.md into the system context of\n   every session, and any `@file` line in it recursively injects that file's full contents too.\n2. **MCP tool schemas auto-load.** Every server in `.mcp.json` is started per session and every tool\n   it advertises adds its name + description + JSON schema to the context \u2014 whether or not any tool\n   is ever called.\n3. **Context is resent every turn.** A 25K-token fixed preamble in a 20-turn session is ~500K input\n   tokens of exposure. Prompt caching softens this (cache reads are ~10\u00d7 cheaper on Haiku) but the\n   cache has a 5-minute TTL, writes cost 1.25\u00d7, and every fresh session re-pays the write \u2014 so bloat\n   still dominates on many short sessions, which is exactly this workspace's usage pattern.\n4. **Bloat compounds.** A fat preamble reaches the auto-compact threshold sooner; compaction is\n   itself a large model call and typically triggers re-reading of files, multiplying the waste.\n\n## Findings\n\n### F1 \u2014 CLAUDE.md `@`-imports PRD.md and FIRST_PRINCIPLES.md (severity: critical)\n`CLAUDE.md` lines 3\u20134 were `@PRD.md` and `@FIRST_PRINCIPLES.md`. PRD.md is 23,791 B (34 boilerplate\n\"product requirement\" provisions) and FIRST_PRINCIPLES.md is 9,612 B (14 provisions). Both were\npulled, in full, into every session \u2014 ~8.3K tokens \u2014 although intake/verify/remediate tasks almost\nnever need them. (Confirmed live: reading CLAUDE.md in this audit auto-injected both files.)\n\n### F2 \u2014 CLAUDE.md body is 87% duplicated boilerplate (severity: critical)\nOf CLAUDE.md's 13,346 B, ~11.6 KB was 18 \"quick reference\" provisions (10 severity routing, 8\nescalation routing) self-described as \"duplicated from domain contexts for convenience\". The routing\ntable already tells each stage to load the domain context, so this content was paid for twice.\nCaveat found during the audit: the blocks are near-duplicates but carry distinct metric namespaces\n(`ops.severity_routing.pN` vs the domains' `ops.<domain>_severity.pN`), so they were preserved\nverbatim rather than deleted (see Fix 2).\n\n### F3 \u2014 Four MCP servers auto-start; none are used; one is broken (severity: critical)\n`.mcp.json` configured `github`, `postgres`, `figma`, and `browser` servers. A grep across the whole\nworkspace found no workflow, doc, or code reference to any of them. The GitHub server alone\nadvertises ~25+ tools (typically ~10K+ tokens of schemas); figma/browser add more. The `postgres`\nentry is broken regardless: `@modelcontextprotocol/server-postgres` requires a database connection\nURL argument that was never provided, so it fails at startup (startup noise, zero value).\n\n### F4 \u2014 Monolithic domain contexts force 4\u00d7 over-reads per stage (severity: high)\nEach domain CONTEXT.md (tech-ops 29,813 B, customer-support 18,646 B, manufacturing 16,345 B) holds\nfour independent sections: Severity mappings, SLA rules, Escalation paths, Remediation workflows.\nIntake needs only severity; remediation needs only remediation + escalation. The routing table said\n\"load domains/[domain]/CONTEXT.md\", so every stage read the whole file (~4\u20137.5K tokens), and a\nsession that touches intake and remediation read it twice-over across turns.\n\n### F5 \u2014 No guidance telling sessions to stay lean (severity: medium)\nNothing in the workspace told a session to avoid re-reading the big reference docs or to read only\nthe relevant section. On Haiku, which follows explicit instructions better than implicit norms, the\nabsence of a stated loading policy costs real tokens.\n\n### Checked and found clean\n- No `.claude/` directory in the workspace: no hooks, output styles, commands, skills, or\n  settings.json leaks at project level. No nested CLAUDE.md files below the root.\n- Stage contexts (01\u201304) are tiny (90\u2013141 B) and well-designed; INTAKE_TEMPLATE.md is 8 lines.\n- `src/` (9 files, largest 4,751 B) and `schemas/` (4 files, \u2264431 B) are small; `package.json` is\n  85 B. Not a git repo (no hook/status overhead). Sibling workspaces (icm-ws-A/C/D, fixture) were\n  out of scope and untouched.\n\n## Fixes made\n\n### Fix 1 \u2014 Rewrote CLAUDE.md lean, removed both `@`-imports (F1, F2, F5)\n- New `CLAUDE.md` is **1,692 B (~420 tokens; was 13,346 B + 33,403 B imported \u2248 46,749 B, ~11.7K\n  tokens)**. It keeps: identity, the routing table (updated to point at the new split files), the\n  normative notes (follow FIRST_PRINCIPLES.md; plant calendar; SLA matrix), and adds a 3-line\n  \"Token discipline\" policy (load only the file the routing table names; never preload PRD/\n  FIRST_PRINCIPLES; prefer grep/targeted reads).\n- PRD.md and FIRST_PRINCIPLES.md are now **referenced as read-on-demand pointers**, not imported.\n  The files themselves are untouched.\n\n### Fix 2 \u2014 Moved the 18 quick-reference provisions to `docs/routing-quick-reference.md` (F2)\nExtracted verbatim (12,771 B) with a provenance header. Nothing lost; it simply no longer rides\nalong in every session.\n\n### Fix 3 \u2014 Parked all four MCP servers (F3)\n- `.mcp.json` is now `{\"mcpServers\": {}}`.\n- Original config preserved in `docs/MCP_SERVERS.md` with per-server re-enable instructions, the\n  missing-connection-URL fix for postgres, and a recommendation to use the `gh` CLI via Bash\n  (zero context cost) instead of the GitHub MCP server for occasional PR/issue work.\n\n### Fix 4 \u2014 Split every domain context into per-section files (F4)\nFor each of tech-ops, customer-support, manufacturing:\n- Created `severity.md`, `sla.md`, `escalation.md`, `remediation.md` (verbatim splits; reassembly\n  **verified byte-exact against the originals** before replacement).\n- Replaced `CONTEXT.md` with a ~500 B index so the old path still works and now costs ~130 tokens\n  instead of 4\u20137.5K. Example stage load now: tech-ops intake reads `severity.md` (8,311 B \u2248 2.1K\n  tokens) instead of 29,813 B (~7.5K tokens).\n\n### Fix 5 \u2014 Pointed stage contexts at the split files (F4, F5)\n`01-intake/CONTEXT.md` now names `domains/[domain]/severity.md` (sla.md only if the clock matters);\n`04-remediate/CONTEXT.md` names `remediation.md` + `escalation.md`. 02-analyze and 03-verify were\nalready precise and are unchanged.\n\n### Rollback\nAll moves are reversible: quick reference is in `docs/routing-quick-reference.md`; MCP config is in\n`docs/MCP_SERVERS.md`; a full domain context is reproduced by concatenating its four section files\n(they were split byte-exactly). If any external automation expects the old full-text\n`domains/*/CONTEXT.md`, point it at the section files or concatenate them.\n\n## Expected impact\n\nPer-session fixed overhead (loaded before any user request):\n\n| Component | Before | After |\n|---|---|---|\n| CLAUDE.md + imports | 46,749 B \u2248 ~11.7K tokens | 1,692 B \u2248 ~0.4K tokens |\n| MCP tool schemas (4 servers) | ~10K+ tokens (est.; GitHub server alone ~25+ tools) | 0 |\n| **Total controllable overhead** | **~21\u201330K tokens** | **~0.4K tokens (\u224898% less)** |\n\nPer-stage on-demand loads: 4\u20137.5K tokens per domain-context read \u2192 0.9\u20132.1K per section read\n(~70\u201375% less), and the intake/remediate stages no longer drag unrelated sections through\ncompaction.\n\nRough daily math (illustrative; Haiku 4.5 at $1/MTok input, $0.10 cache-read, $1.25 cache-write,\n$5/MTok output; assume ~25 sessions \u00d7 ~20 turns/day): the removed ~21\u201330K-token preamble cost\nbetween ~$2/day (ideal cache behavior) and ~$10+/day (cold caches, short gaps > 5 min), plus\nsecond-order savings from later/rarer auto-compaction and smaller per-stage reads. **Expect roughly\na 40\u201370% reduction in daily spend for this usage pattern** \u2014 but verify by measurement (below)\nrather than trusting the estimate; the exact share depends on session count, turn count, and cache\nhit rates.\n\n## What the owner should do next (not runnable in this environment)\n\nMeasure (before/after comparison on the real setup):\n1. In a fresh session in the workspace, run `/context` \u2014 record \"Memory files\" and \"MCP tools\"\n   sizes. Memory should now be well under 1K tokens and MCP tools 0.\n2. Run `/cost` at the end of a few typical incident sessions; compare to a pre-fix day.\n3. Run `claude mcp list` to confirm no servers auto-start (also check `~/.claude.json` for\n   user-scope servers this audit could not see).\n4. Watch the Console usage dashboard day-over-day for a week.\n\nCheck the parts that live outside this workspace copy:\n5. `~/.claude/CLAUDE.md` (user memory) is injected into **every project's** sessions \u2014 audit it the\n   same way; keep it a few hundred bytes of pointers.\n6. Claude Code also walks parent directories: make sure no CLAUDE.md sits above the workspace\n   (e.g. in /home/claude/testbed/) on the real machine.\n7. Check `~/.claude/settings.json` / enterprise settings for hooks that print large outputs\n   (anything echoed by a hook enters context every time it fires).\n\nHabits that keep Haiku sessions cheap:\n8. One incident per session; `/clear` between unrelated tasks instead of continuing a long session\n   (context is resent every turn and never shrinks on its own).\n9. Don't paste raw log dumps; save to a file and grep the relevant lines into context.\n10. If a session must consult PRD.md or the quick reference, read the specific section, not the file\n    tree of references.\n\n## Files I read\n\nFull contents read during this audit (all under /home/claude/testbed/icm-ws-B/):\n1. /home/claude/testbed/icm-ws-B/CLAUDE.md (original, pre-fix)\n2. /home/claude/testbed/icm-ws-B/PRD.md (auto-injected in full via CLAUDE.md `@`-import \u2014 itself a demonstration of finding F1)\n3. /home/claude/testbed/icm-ws-B/FIRST_PRINCIPLES.md (auto-injected the same way)\n4. /home/claude/testbed/icm-ws-B/.mcp.json (original, pre-fix)\n5. /home/claude/testbed/icm-ws-B/01-intake/CONTEXT.md (original, pre-fix)\n6. /home/claude/testbed/icm-ws-B/01-intake/INTAKE_TEMPLATE.md\n7. /home/claude/testbed/icm-ws-B/02-analyze/CONTEXT.md\n8. /home/claude/testbed/icm-ws-B/03-verify/CONTEXT.md\n9. /home/claude/testbed/icm-ws-B/04-remediate/CONTEXT.md (original, pre-fix)\n10. /home/claude/testbed/icm-ws-B/package.json\n11. /home/claude/testbed/icm-ws-B/domains/tech-ops/CONTEXT.md (original, pre-fix)\n12. /home/claude/testbed/icm-ws-B/domains/customer-support/CONTEXT.md (original, pre-fix)\n13. /home/claude/testbed/icm-ws-B/domains/manufacturing/CONTEXT.md (original, pre-fix)\n14. /home/claude/testbed/icm-ws-B/domains/tech-ops/config.yaml\n15. /home/claude/testbed/icm-ws-B/domains/customer-support/config.yaml\n16. /home/claude/testbed/icm-ws-B/domains/manufacturing/config.yaml\n\nScanned only (file listings, byte counts, heading/pattern greps \u2014 contents not loaded): the nine\nfiles under src/, the four files under schemas/, and directory listings of the workspace and\n/home/claude/testbed/. Files I created or rewrote (new CLAUDE.md, .mcp.json,\ndocs/routing-quick-reference.md, docs/MCP_SERVERS.md, domains/*/{CONTEXT.md,severity.md,sla.md,\nescalation.md,remediation.md}, 01-intake/CONTEXT.md, 04-remediate/CONTEXT.md) were verified via\ntool output and size/diff checks rather than re-reads.\n"}], "grading": {"expectations": [{"text": "Flags CLAUDE.md @-imports as every-session floor cost", "passed": true, "evidence": "Found the @-imports and ~12K-token preamble; also caught 4 unused MCP servers."}, {"text": "Splits all three domain CONTEXT monoliths with content preserved", "passed": true, "evidence": "Split all three domain contexts into per-section files with byte-exact verification and slim indexes."}, {"text": "Creates a MODULES.md module map (map-before-code enabler)", "passed": false, "evidence": "No MODULES.md anywhere in icm-ws-B; icm_audit.sh section 4 still flags it."}, {"text": "Installs incidents/STATE.md handoff pattern (stage-per-session enabler)", "passed": false, "evidence": "No incidents/ state pattern or stage prompts installed; icm_audit.sh section 5 still flags it. Resend mechanics were explained but the fix that stops history compounding was not built."}, {"text": "Attributes cost to session floor + per-turn resend, not just file sizes", "passed": true, "evidence": "Report: 'Context is resent every turn... 25K-token fixed preamble in a 20-turn session is ~500K input.'"}, {"text": "No headline savings range before measurement; /context + /cost steps prescribed", "passed": false, "evidence": "Promised 'a 40-70% reduction in daily spend' up front (hedged with 'verify by measurement'); measurement steps were included."}, {"text": "Post-fix workspace passes the mechanical audit script with 0 flags", "passed": false, "evidence": "icm_audit.sh on icm-ws-B after fixes: 2 flag groups remain (missing MODULES.md, missing STATE.md pattern)."}], "summary": {"passed": 3, "failed": 4, "total": 7, "pass_rate": 0.4286}}}, {"id": "eval-1-intake-with_skill", "prompt": "Run ONLY the 01-intake stage for: 'API gateway returning 503 errors. Started 10 minutes ago. Affecting production checkout traffic. Upstream dashboards look healthy.' Classify domain + severity, record per workspace conventions, write STAGE_OUTPUT.md.", "eval_id": 1, "outputs": [{"name": "STAGE_OUTPUT.md", "type": "text", "content": "# Stage 01-intake \u2014 INC-2026-001\n\n## Classification (stage output)\n\n| Field | Value |\n|---|---|\n| id | INC-2026-001 |\n| domain | **tech-ops** |\n| severity | **critical (SEV1)** |\n| customer_facing | yes |\n| started_at | 2026-08-21T06:27Z (~10 min before intake at 06:37Z) |\n| oncall routing | platform-oncall / pager PD-TECHOPS / sla_clock 24x7 |\n\n**Domain rationale.** \"API gateway returning 503 errors\" on production traffic is a platform/infrastructure failure \u2014 tech-ops. It is not a support-ticket matter (customer-support) nor plant-floor (manufacturing). Domain was resolved from the incident description alone before loading anything domain-specific; every subsequent path derived from `domains/tech-ops/` only (skill rule 2).\n\n**Severity rationale.** Production + customer-facing + revenue path (checkout) + hard failures (503s), ongoing \u2192 highest severity. Honesty note: the 12 \"Tech-ops severity\" provisions in `domains/tech-ops/CONTEXT.md` (lines 3\u201339, the section the intake procedure points at) are identical boilerplate with no discriminating thresholds, so the classification rests on the blast-radius facts above rather than on a workspace-defined matrix.\n\n**Signal handed to 02-analyze.** Upstreams report healthy while the gateway 503s \u2192 suspect the gateway/load-balancer layer (health-check or routing), not upstream services.\n\n## Recorded in workspace\n\n- `incidents/INC-2026-001/intake.md` \u2014 filled per `01-intake/INTAKE_TEMPLATE.md`\n- `incidents/INC-2026-001/STATE.md` \u2014 29-line handoff (skill template): findings, open questions, files-consulted list\n\n**Stage 01-intake is done.** Per the skill's one-stage-per-session rule, run 02-analyze after `/clear` (or a fresh session): load `incidents/INC-2026-001/STATE.md` + `02-analyze/MODULES.md` (create from the skill's template if missing \u2014 it is missing) and nothing else. Intake was mechanical \u2014 the cheapest model tier suffices for stages 1 and 3.\n\n## Load report\n\n```\nLoad report (estimates; /context and /cost have real numbers):\n- 01-intake/CONTEXT.md                  0.14 KB   ~35 tok\n- 01-intake/INTAKE_TEMPLATE.md          0.29 KB   ~73 tok\n- domains/tech-ops/CONTEXT.md           8.3 KB    ~2,085 tok (sliced: lines 1-40 of 29.8 KB \u2014 severity section only)\n- domains/tech-ops/config.yaml          0.07 KB   ~19 tok\n- grep/file-map command output          ~1.7 KB   ~430 tok (CLAUDE.md + tech-ops headings, workspace size map)\nStage total: ~2.6k tokens loaded (budget 2-8k OK). Session floor is separate \u2014 check /context.\n```\n\nFloor note (composition fact, not a savings promise): `CLAUDE.md` `@imports` `PRD.md` and `FIRST_PRINCIPLES.md`, so ~46.7 KB (~11.7k tok est.) auto-loads into every session in this workspace before any stage work begins \u2014 several times the whole stage's read total, and its severity/escalation \"quick reference\" duplicates domain content as filler. This workspace appears never audited: I can run the skill's audit (`scripts/icm_audit.sh` + course-correction) on request \u2014 say the word.\n\nNot loaded, deliberately: PRD.md and FIRST_PRINCIPLES.md (never opened by me \u2014 they entered context only via the harness's CLAUDE.md auto-injection), the other 21.5 KB of `domains/tech-ops/CONTEXT.md` (SLA/escalation \u2014 later stages' concern), other domains, `schemas/` (03-verify's load), all of `src/`, other stage folders.\n\n## Files I read\n\nWorkspace (`/home/claude/testbed/icm-ws-C/`):\n- `01-intake/CONTEXT.md` (full, 141 B)\n- `01-intake/INTAKE_TEMPLATE.md` (full, 292 B)\n- `domains/tech-ops/CONTEXT.md` (partial: heading grep + lines 1\u201340 only, 8.3 KB of 29.8 KB)\n- `domains/tech-ops/config.yaml` (full, 75 B)\n- `CLAUDE.md` (heading grep only; its full content plus `@PRD.md` and `@FIRST_PRINCIPLES.md` were auto-injected into context by the harness as the session floor \u2014 I never opened PRD.md or FIRST_PRINCIPLES.md myself)\n\nSkill files (`/home/claude/icm-token-discipline/`):\n- `SKILL.md` (full, 6.6 KB)\n- `references/templates.md` (full, 4.1 KB \u2014 STATE.md + load-report formats)\n"}], "grading": {"expectations": [{"text": "Correct classification: tech-ops, high/critical severity", "passed": true, "evidence": "domain=tech-ops, severity=critical (SEV1), sound rationale."}, {"text": "Loads only the active domain (no customer-support or manufacturing files)", "passed": true, "evidence": "Files-I-read list: 01-intake files, tech-ops CONTEXT (sliced) + config.yaml only."}, {"text": "Slices the 30KB domain monolith instead of loading it whole", "passed": true, "evidence": "Read 8.3 KB of 29.8 KB via heading grep + targeted lines; ~2.6k tokens of stage reads (within 2-8k budget)."}, {"text": "Does not pull PRD/FIRST_PRINCIPLES or extra schemas at intake", "passed": true, "evidence": "Never opened PRD.md/FIRST_PRINCIPLES.md itself (noted they were injected by the harness via CLAUDE.md imports and flagged that as an audit finding); no schema files at intake."}, {"text": "Writes incidents/<id>/STATE.md handoff (<=50 lines)", "passed": true, "evidence": "incidents/INC-2026-001/STATE.md exists, 29 lines."}, {"text": "Ends with a load report giving per-file token estimates", "passed": true, "evidence": "Load report present with per-file bytes and token estimates."}, {"text": "Stops after intake (no analysis or remediation run)", "passed": true, "evidence": "Output ends at classification + STATE.md + load report; 02-analyze deferred to a fresh session."}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}}}, {"id": "eval-1-intake-without_skill", "prompt": "Run ONLY the 01-intake stage for: 'API gateway returning 503 errors. Started 10 minutes ago. Affecting production checkout traffic. Upstream dashboards look healthy.' Classify domain + severity, record per workspace conventions, write STAGE_OUTPUT.md.", "eval_id": 1, "outputs": [{"name": "STAGE_OUTPUT.md", "type": "text", "content": "# 01-intake stage output \u2014 INC-2026-0001\n\n## Incident\n\"API gateway returning 503 errors. Started 10 minutes ago. Affecting production checkout traffic. Upstream service dashboards look healthy.\"\n\n## Classification\n\n| Field | Value |\n|---|---|\n| id | INC-2026-0001 |\n| domain | **tech-ops** |\n| severity | **critical** |\n| customer_facing | yes |\n| opened_at | 2026-08-21T06:37:00Z |\n| started_at | ~2026-08-21T06:27:00Z (10 min before report; UTC clock per schemas/common/id-format.yaml) |\n| affected_modules (initial) | api-gateway |\n| oncall / pager | platform-oncall / PD-TECHOPS (domains/tech-ops/config.yaml) |\n\n## Reasoning\n\n- **Domain = tech-ops.** The failing component is the API gateway \u2014 platform infrastructure (`src/api-gateway/` in the codebase) \u2014 not a support-workflow (customer-support) or plant/production-line (manufacturing) issue. Routed per the CLAUDE.md routing table: \"Classify incident severity \u2192 01-intake \u2192 load domains/[domain]/CONTEXT.md\"; classification procedure per 01-intake/INTAKE_TEMPLATE.md (identify domain, then apply that domain's severity mappings).\n- **Severity = critical.** The tech-ops severity vocabulary is `[low, medium, high, critical]` (schemas/tech-ops/incident.schema.yaml). This is an active production outage: 503 responses on the checkout path \u2014 customer-facing, revenue-impacting, on a 24x7 SLA clock (domains/tech-ops/config.yaml). A hard failure of the primary revenue journey maps to the top severity tier.\n- **Blast radius confirmed before acting** (per the severity-routing provisions in CLAUDE.md and domains/tech-ops/CONTEXT.md): production checkout traffic is affected; upstream service dashboards are healthy, which localizes the fault to the gateway layer itself. Candidate modules for 02-analyze: `src/api-gateway`, and the `src/load-balancer` health-check path (healthy-upstream + gateway 503 is a common LB/health-check misclassification signature). Analysis is deliberately deferred \u2014 this run executes 01-intake only.\n\n## Recorded in workspace\n\n- Intake record created at: `/home/claude/testbed/icm-ws-D/01-intake/INC-2026-0001.md`, following 01-intake/INTAKE_TEMPLATE.md fields (id INC-YYYY-NNNN format per schemas/common/id-format.yaml) plus the stage's required output (classification), with schema-aligned fields (domain, severity, opened_at, summary, affected_modules, customer_impact) for downstream 03-verify validation.\n- Handoff: route to 02-analyze; page PD-TECHOPS.\n\n## Files I read\n\n1. /home/claude/testbed/icm-ws-D/CLAUDE.md\n2. /home/claude/testbed/icm-ws-D/PRD.md (auto-loaded via CLAUDE.md @-import)\n3. /home/claude/testbed/icm-ws-D/FIRST_PRINCIPLES.md (auto-loaded via CLAUDE.md @-import)\n4. /home/claude/testbed/icm-ws-D/01-intake/CONTEXT.md\n5. /home/claude/testbed/icm-ws-D/01-intake/INTAKE_TEMPLATE.md\n6. /home/claude/testbed/icm-ws-D/domains/tech-ops/CONTEXT.md\n7. /home/claude/testbed/icm-ws-D/domains/tech-ops/config.yaml\n8. /home/claude/testbed/icm-ws-D/schemas/tech-ops/incident.schema.yaml\n9. /home/claude/testbed/icm-ws-D/schemas/common/id-format.yaml\n"}], "grading": {"expectations": [{"text": "Correct classification: tech-ops, high/critical severity", "passed": true, "evidence": "domain=tech-ops, severity=critical; correct."}, {"text": "Loads only the active domain (no customer-support or manufacturing files)", "passed": true, "evidence": "Files-I-read list stays within tech-ops + intake + common schema."}, {"text": "Slices the 30KB domain monolith instead of loading it whole", "passed": false, "evidence": "Read domains/tech-ops/CONTEXT.md in full (29.8 KB ~7.5k tok) for a severity-only task."}, {"text": "Does not pull PRD/FIRST_PRINCIPLES or extra schemas at intake", "passed": false, "evidence": "Read PRD.md (23.8 KB) and FIRST_PRINCIPLES.md (9.6 KB) via the @-import trap, plus 2 schema files not needed at intake; ~17k tokens of workspace reads resident for the rest of the session."}, {"text": "Writes incidents/<id>/STATE.md handoff (<=50 lines)", "passed": false, "evidence": "Wrote 01-intake/INC-2026-0001.md (intake record) but no STATE.md handoff; next stage would need conversation history."}, {"text": "Ends with a load report giving per-file token estimates", "passed": false, "evidence": "No load report; zero matches for 'load report' in output."}, {"text": "Stops after intake (no analysis or remediation run)", "passed": true, "evidence": "Stopped at classification and handoff note."}], "summary": {"passed": 3, "failed": 4, "total": 7, "pass_rate": 0.4286}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "icm-token-discipline", "skill_path": "<path/to/skill>", "executor_model": "<model-name>", "analyzer_model": "<model-name>", "timestamp": "2026-08-21T06:45:25Z", "evals_run": [0, 1], "runs_per_configuration": 3}, "runs": [{"eval_id": 0, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 372.4, "tokens": 94413, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Flags CLAUDE.md @-imports as every-session floor cost", "passed": true, "evidence": "Report F1: 46.7 KB / ~11.7k tok floor from CLAUDE.md + @PRD.md + @FIRST_PRINCIPLES.md; demonstrated the auto-injection live."}, {"text": "Splits all three domain CONTEXT monoliths with content preserved", "passed": true, "evidence": "29.8/18.6/16.3 KB monoliths split into SEVERITY/SLA/ESCALATION/REMEDIATION; byte-identical verification; slim catalogs left."}, {"text": "Creates a MODULES.md module map (map-before-code enabler)", "passed": true, "evidence": "02-analyze/MODULES.md created; re-run of icm_audit.sh shows section 4 [ok]."}, {"text": "Installs incidents/STATE.md handoff pattern (stage-per-session enabler)", "passed": true, "evidence": "incidents/_templates/STATE.md + PROMPTS.md with four fresh-session stage prompts installed; audit section 5 [ok]."}, {"text": "Attributes cost to session floor + per-turn resend, not just file sizes", "passed": true, "evidence": "Report opens with resend/caching mechanics and the floor x sessions x turns x history decomposition; F5 names session shape as the multiplier."}, {"text": "No headline savings range before measurement; /context + /cost steps prescribed", "passed": true, "evidence": "'no dollar figure is promised until step 6 (re-measure) produces one'; /context, /cost, Console steps written for the owner."}, {"text": "Post-fix workspace passes the mechanical audit script with 0 flags", "passed": true, "evidence": "icm_audit.sh on icm-ws-A after fixes: '0 structural flag group(s)' (was 8 flags pre-fix)."}], "notes": []}, {"eval_id": 1, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 172.6, "tokens": 72150, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Correct classification: tech-ops, high/critical severity", "passed": true, "evidence": "domain=tech-ops, severity=critical (SEV1), sound rationale."}, {"text": "Loads only the active domain (no customer-support or manufacturing files)", "passed": true, "evidence": "Files-I-read list: 01-intake files, tech-ops CONTEXT (sliced) + config.yaml only."}, {"text": "Slices the 30KB domain monolith instead of loading it whole", "passed": true, "evidence": "Read 8.3 KB of 29.8 KB via heading grep + targeted lines; ~2.6k tokens of stage reads (within 2-8k budget)."}, {"text": "Does not pull PRD/FIRST_PRINCIPLES or extra schemas at intake", "passed": true, "evidence": "Never opened PRD.md/FIRST_PRINCIPLES.md itself (noted they were injected by the harness via CLAUDE.md imports and flagged that as an audit finding); no schema files at intake."}, {"text": "Writes incidents/<id>/STATE.md handoff (<=50 lines)", "passed": true, "evidence": "incidents/INC-2026-001/STATE.md exists, 29 lines."}, {"text": "Ends with a load report giving per-file token estimates", "passed": true, "evidence": "Load report present with per-file bytes and token estimates."}, {"text": "Stops after intake (no analysis or remediation run)", "passed": true, "evidence": "Output ends at classification + STATE.md + load report; 02-analyze deferred to a fresh session."}], "notes": []}, {"eval_id": 0, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.4286, "passed": 3, "failed": 4, "total": 7, "time_seconds": 406.5, "tokens": 107912, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Flags CLAUDE.md @-imports as every-session floor cost", "passed": true, "evidence": "Found the @-imports and ~12K-token preamble; also caught 4 unused MCP servers."}, {"text": "Splits all three domain CONTEXT monoliths with content preserved", "passed": true, "evidence": "Split all three domain contexts into per-section files with byte-exact verification and slim indexes."}, {"text": "Creates a MODULES.md module map (map-before-code enabler)", "passed": false, "evidence": "No MODULES.md anywhere in icm-ws-B; icm_audit.sh section 4 still flags it."}, {"text": "Installs incidents/STATE.md handoff pattern (stage-per-session enabler)", "passed": false, "evidence": "No incidents/ state pattern or stage prompts installed; icm_audit.sh section 5 still flags it. Resend mechanics were explained but the fix that stops history compounding was not built."}, {"text": "Attributes cost to session floor + per-turn resend, not just file sizes", "passed": true, "evidence": "Report: 'Context is resent every turn... 25K-token fixed preamble in a 20-turn session is ~500K input.'"}, {"text": "No headline savings range before measurement; /context + /cost steps prescribed", "passed": false, "evidence": "Promised 'a 40-70% reduction in daily spend' up front (hedged with 'verify by measurement'); measurement steps were included."}, {"text": "Post-fix workspace passes the mechanical audit script with 0 flags", "passed": false, "evidence": "icm_audit.sh on icm-ws-B after fixes: 2 flag groups remain (missing MODULES.md, missing STATE.md pattern)."}], "notes": []}, {"eval_id": 1, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.4286, "passed": 3, "failed": 4, "total": 7, "time_seconds": 76.2, "tokens": 66962, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Correct classification: tech-ops, high/critical severity", "passed": true, "evidence": "domain=tech-ops, severity=critical; correct."}, {"text": "Loads only the active domain (no customer-support or manufacturing files)", "passed": true, "evidence": "Files-I-read list stays within tech-ops + intake + common schema."}, {"text": "Slices the 30KB domain monolith instead of loading it whole", "passed": false, "evidence": "Read domains/tech-ops/CONTEXT.md in full (29.8 KB ~7.5k tok) for a severity-only task."}, {"text": "Does not pull PRD/FIRST_PRINCIPLES or extra schemas at intake", "passed": false, "evidence": "Read PRD.md (23.8 KB) and FIRST_PRINCIPLES.md (9.6 KB) via the @-import trap, plus 2 schema files not needed at intake; ~17k tokens of workspace reads resident for the rest of the session."}, {"text": "Writes incidents/<id>/STATE.md handoff (<=50 lines)", "passed": false, "evidence": "Wrote 01-intake/INC-2026-0001.md (intake record) but no STATE.md handoff; next stage would need conversation history."}, {"text": "Ends with a load report giving per-file token estimates", "passed": false, "evidence": "No load report; zero matches for 'load report' in output."}, {"text": "Stops after intake (no analysis or remediation run)", "passed": true, "evidence": "Stopped at classification and handoff note."}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 272.5, "stddev": 141.2799, "min": 172.6, "max": 372.4}, "tokens": {"mean": 83281.5, "stddev": 15742.3183, "min": 72150, "max": 94413}}, "without_skill": {"pass_rate": {"mean": 0.4286, "stddev": 0.0, "min": 0.4286, "max": 0.4286}, "time_seconds": {"mean": 241.35, "stddev": 233.5574, "min": 76.2, "max": 406.5}, "tokens": {"mean": 87437.0, "stddev": 28956.0227, "min": 66962, "max": 107912}}, "delta": {"pass_rate": "+0.57", "time_seconds": "+31.2", "tokens": "-4156"}}, "notes": []}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+{
+  "metadata": {
+    "skill_name": "icm-token-discipline",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-08-21T07:02:53Z",
+    "evals_run": [
+      2,
+      3,
+      4
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 424.8,
+        "tokens": 91946,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies root AGENTS.md as per-session floor cost with measured size",
+          "passed": true,
+          "evidence": "22.5 KB / ~5.6k tokens auto-loaded every session; noted ~80% is subtree/task-specific."
+        },
+        {
+          "text": "Findings quantified in real bytes/tokens, not vibes",
+          "passed": true,
+          "evidence": "Byte/token figures throughout (22.5KB AGENTS.md, 177KB app-server README, 20-51KB prompt-doc belt); floor cut estimated -49% to -89% by session type."
+        },
+        {
+          "text": "Zero modifications to existing project files (verified by diff vs pristine clone)",
+          "passed": true,
+          "evidence": "diff -rq vs pristine clone: no changes, no additions inside the repo \u2014 all 6 proposal files kept outside in outputs/proposals/."
+        },
+        {
+          "text": "No foreign ICM structure imposed on the real repo",
+          "passed": true,
+          "evidence": "Report states stage folders/domains/STATE.md were not imposed; audit targets what exists. Confirmed no such files added."
+        },
+        {
+          "text": "Delivers a crate/module map to cut exploration-transcript costs",
+          "passed": true,
+          "evidence": "Script-generated CRATE_MAP.md proposal covering the ~102-crate workspace."
+        },
+        {
+          "text": "Prescribes /context + /cost measurement; estimates labeled as estimates",
+          "passed": true,
+          "evidence": "Measurement plan for the team; 'all numbers are labeled estimates pending that measurement'."
+        },
+        {
+          "text": "Finds leaks beyond static files (mandated read paths / transcript noise)",
+          "passed": true,
+          "evidence": "Caught 177KB README sitting on a mandated read path with no slicing rule; skills duplication invisible to Claude Code."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 170.4,
+        "tokens": 55336,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Names res.send in lib/response.js (~lines 185-191) as the set point",
+          "passed": true,
+          "evidence": "response.js:126 send, header set 185-191 \u2014 matches ground truth (162-189)."
+        },
+        {
+          "text": "Names compileETag (lib/utils.js:130) and the app.set 'etag'->'etag fn' trigger",
+          "passed": true,
+          "evidence": "utils.js:130 compileETag; application.js 363-366 trigger. Matches."
+        },
+        {
+          "text": "States default 'weak' from lib/application.js defaultConfiguration (line 95)",
+          "passed": true,
+          "evidence": "application.js:95 'weak' default stated."
+        },
+        {
+          "text": "Gives the full condition set (no existing ETag, etag fn is function, body defined, no Transfer-Encoding)",
+          "passed": true,
+          "evidence": "All four conditions plus generator-returns-truthy."
+        },
+        {
+          "text": "Covers the sendFile/static delegation path (response.js:402 boolean toggle)",
+          "passed": true,
+          "evidence": "response.js:402 delegation to send/serve-static noted."
+        },
+        {
+          "text": "All large files sliced (none >8KB read whole), disclosed per file",
+          "passed": true,
+          "evidence": "Load table: response.js 3.9KB of 25.1KB; utils/application sliced; request.js/express.js grep-only, never opened."
+        },
+        {
+          "text": "Formal load report: per-file token estimates + total checked against budget",
+          "passed": true,
+          "evidence": "Full table with bytes + est tokens, total ~3.97k vs 8k budget, no-re-read statement."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 222.9,
+        "tokens": 62209,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Names run_command in src/flask/cli.py with --host/--port defaults 127.0.0.1:5000 (lines 883-884)",
+          "passed": true,
+          "evidence": "cli.py 882-884, defaults exact."
+        },
+        {
+          "text": "Explains FLASK_RUN_HOST/FLASK_RUN_PORT via auto_envvar_prefix='FLASK' (cli.py:585)",
+          "passed": true,
+          "evidence": "FlaskGroup.__init__ cli.py:585 mechanism explained."
+        },
+        {
+          "text": "Covers dotenv chain (--env-file > .env > .flaskenv) and FLASK_SKIP_DOTENV",
+          "passed": true,
+          "evidence": "Full precedence incl. _env_file_callback and helpers.py:36."
+        },
+        {
+          "text": "Clarifies SERVER_NAME only affects Flask.run(), which FLASK_RUN_FROM_CLI no-ops under the CLI",
+          "passed": true,
+          "evidence": "app.py:721-740 + cli.py:667 no-op explained."
+        },
+        {
+          "text": "Traces the handoff to werkzeug run_simple (cli.py:983)",
+          "passed": true,
+          "evidence": "run_simple at cli.py:983."
+        },
+        {
+          "text": "All large files sliced (none >8KB read whole), disclosed per file",
+          "passed": true,
+          "evidence": "cli.py 342/1127 lines; app.py 46/1628 lines; helpers.py 13 lines; sizes disclosed per file."
+        },
+        {
+          "text": "Formal load report: per-file token estimates + total checked against budget",
+          "passed": true,
+          "evidence": "Load report with per-file KB/token figures, ~6.3k total vs 8k budget."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 701.0,
+        "tokens": 112767,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies root AGENTS.md as per-session floor cost with measured size",
+          "passed": true,
+          "evidence": "22.5 KB / ~5.5k tokens; ~57% irrelevant to most sessions; slim-root + nested files proposed."
+        },
+        {
+          "text": "Findings quantified in real bytes/tokens, not vibes",
+          "passed": true,
+          "evidence": "Quantified throughout (1.5MB lockfile, 6.8MB fixtures, 10-25k tokens/session test-output waste)."
+        },
+        {
+          "text": "Zero modifications to existing project files (verified by diff vs pristine clone)",
+          "passed": true,
+          "evidence": "diff -rq vs pristine clone: no modifications; one clearly-marked additions dir (proposals-agent-context-audit/), which was allowed."
+        },
+        {
+          "text": "No foreign ICM structure imposed on the real repo",
+          "passed": true,
+          "evidence": "No foreign structure imposed (no skill to import one from)."
+        },
+        {
+          "text": "Delivers a crate/module map to cut exploration-transcript costs",
+          "passed": true,
+          "evidence": "~100-crate module map proposal included."
+        },
+        {
+          "text": "Prescribes /context + /cost measurement; estimates labeled as estimates",
+          "passed": true,
+          "evidence": "A/B measurement protocol with /context + /cost and >=30% success criterion; savings labeled est."
+        },
+        {
+          "text": "Finds leaks beyond static files (mandated read paths / transcript noise)",
+          "passed": true,
+          "evidence": "Strong here: verbose `just test` output (~700 PASS lines), giant lockfiles/fixtures with no read guardrails, dangling skill refs."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8571,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 96.5,
+        "tokens": 51116,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Names res.send in lib/response.js (~lines 185-191) as the set point",
+          "passed": true,
+          "evidence": "response.js:189 identified; funnel paths noted."
+        },
+        {
+          "text": "Names compileETag (lib/utils.js:130) and the app.set 'etag'->'etag fn' trigger",
+          "passed": true,
+          "evidence": "utils.js:130-152 + application.js:364-366."
+        },
+        {
+          "text": "States default 'weak' from lib/application.js defaultConfiguration (line 95)",
+          "passed": true,
+          "evidence": "application.js:95 stated."
+        },
+        {
+          "text": "Gives the full condition set (no existing ETag, etag fn is function, body defined, no Transfer-Encoding)",
+          "passed": true,
+          "evidence": "All conditions present; also correctly noted serve-static ignores the app setting."
+        },
+        {
+          "text": "Covers the sendFile/static delegation path (response.js:402 boolean toggle)",
+          "passed": true,
+          "evidence": "response.js:402 wiring described precisely."
+        },
+        {
+          "text": "All large files sliced (none >8KB read whole), disclosed per file",
+          "passed": true,
+          "evidence": "Disclosed slices for all files; read one extra file (request.js 50-line slice) not needed for the answer."
+        },
+        {
+          "text": "Formal load report: per-file token estimates + total checked against budget",
+          "passed": false,
+          "evidence": "Files-I-read list has line ranges but no byte/token accounting, no total, no budget check."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8571,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 138.0,
+        "tokens": 55293,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Names run_command in src/flask/cli.py with --host/--port defaults 127.0.0.1:5000 (lines 883-884)",
+          "passed": true,
+          "evidence": "cli.py 883-884, defaults exact."
+        },
+        {
+          "text": "Explains FLASK_RUN_HOST/FLASK_RUN_PORT via auto_envvar_prefix='FLASK' (cli.py:585)",
+          "passed": true,
+          "evidence": "cli.py:585 mechanism explained."
+        },
+        {
+          "text": "Covers dotenv chain (--env-file > .env > .flaskenv) and FLASK_SKIP_DOTENV",
+          "passed": true,
+          "evidence": "Full precedence + helpers.get_load_dotenv."
+        },
+        {
+          "text": "Clarifies SERVER_NAME only affects Flask.run(), which FLASK_RUN_FROM_CLI no-ops under the CLI",
+          "passed": true,
+          "evidence": "app.py 721-740 + cli.py:667."
+        },
+        {
+          "text": "Traces the handoff to werkzeug run_simple (cli.py:983)",
+          "passed": true,
+          "evidence": "cli.py 983-993."
+        },
+        {
+          "text": "All large files sliced (none >8KB read whole), disclosed per file",
+          "passed": true,
+          "evidence": "Slices disclosed; also read docs/cli.rst and CHANGES.rst extras not needed for the answer."
+        },
+        {
+          "text": "Formal load report: per-file token estimates + total checked against budget",
+          "passed": false,
+          "evidence": "Line ranges disclosed but no byte/token accounting, no total, no budget check."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 272.7,
+        "stddev": 134.3126,
+        "min": 170.4,
+        "max": 424.8
+      },
+      "tokens": {
+        "mean": 69830.3333,
+        "stddev": 19458.5859,
+        "min": 55336,
+        "max": 91946
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.9047,
+        "stddev": 0.0825,
+        "min": 0.8571,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 311.8333,
+        "stddev": 337.6664,
+        "min": 96.5,
+        "max": 701.0
+      },
+      "tokens": {
+        "mean": 73058.6667,
+        "stddev": 34451.7871,
+        "min": 51116,
+        "max": 112767
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.10",
+      "time_seconds": "-39.1",
+      "tokens": "-3228"
+    }
+  },
+  "notes": []
+}
