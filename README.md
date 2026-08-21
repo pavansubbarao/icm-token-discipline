@@ -29,6 +29,9 @@ Tested with paired agent runs — identical tasks, one agent with the skill, one
 | 1 | Synthetic incident workspace with seeded leaks | 14/14 checks | 6/14 (no skill) |
 | 2 | Real public repos: OpenAI Codex monorepo, Express, Flask | 21/21 checks | 19/21 (no skill) |
 | 3 | All five testbeds, v1.1 vs v1 | 42/43 checks | 36/43 (v1) |
+| 4 | Records layer on real Express + Flask | warm runs: −23–28% tokens, −46–65% time, **0 source files read**; poison test caught a deliberately falsified card | cold runs (same skill, empty memory) |
+
+v1.3 adds the **records layer** — the knowledge annuity: answers that took real reading get filed once as SHA-anchored cards (`.icm/records/`), every later question starts with a free `scripts/icm_records.sh recall`, and staleness is mechanically detectable (`check`) so a changed codebase can never silently serve an outdated answer. Plus `scripts/icm_batch.sh` (run a queue of tasks as isolated fresh sessions) and the free-lane/paid-lane catalog template. v1.2 adds strict mode (`references/strict-mode.md`): monthly budget targets, halved stage budgets, batched tool calls, dollar-priced load reports.
 
 v1.1 adds: a session guardrail (stage done → `/clear`, idle-gap warning for the ~5-minute cache expiry), the `TOKEN_LEAK_AUDIT.md` report template every audit delivers, `scripts/make_index.sh` (section indexes for big docs — in round 3 it indexed a 44k-token README without ever reading it), and conclusions-only output caps.
 

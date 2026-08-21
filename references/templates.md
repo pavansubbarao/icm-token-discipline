@@ -26,6 +26,7 @@ domain: tech-ops
 severity: high
 stage_done: 02-analyze        # last completed stage
 next: 03-verify
+related:                      # linked incidents in other domains, if any (INC-xxxx)
 ---
 # State
 ## Findings so far (≤10 bullets)
@@ -40,6 +41,10 @@ next: 03-verify
 - src/load-balancer/health-check.js (lines 40–95)
 - domains/tech-ops/SEVERITY.md
 ```
+
+Discipline: each stage REWRITES findings (conclusions supersede evidence — one home per fact);
+never append stage-by-stage. Overflow that must persist → `incidents/<id>/notes.md`, linked here,
+loaded only on demand. Hard cap ~40 lines at every handoff ([scaling.md](scaling.md) §3).
 
 ## The four stage-start prompts
 
@@ -87,6 +92,52 @@ Over ~8k → add one line: which rule broke, and the fix (e.g., "rule 1: read pa
 | Validate incident | 03-verify | schemas/<domain>/incident.schema.yaml |
 | Escalate | 03-verify | domains/<domain>/ESCALATION.md |
 | Remediate | 04-remediate | domains/<domain>/REMEDIATION.md |
+```
+
+## FREE-LANE.md (the free lane / paid lane catalog — put in workspace root)
+
+```markdown
+# Free lane first — these questions cost $0 (answer by command, not by AI)
+| Question shape | Free answer |
+|---|---|
+| Where is X defined/used? | grep -rn "X" src/ (or the .index.md of the doc) |
+| What's in module M? | 02-analyze/MODULES.md row, then M's index |
+| Did we answer this before? | scripts/icm_records.sh recall <words> |
+| Are our records still valid? | scripts/icm_records.sh check |
+| What's leaking tokens? | scripts/icm_audit.sh |
+# Paid lane (worth model tokens): design, diagnosis, tradeoffs, root cause, review.
+```
+
+## Domain lookup files as YAML (denser than prose — use for table-shaped content)
+
+Prose explains; tables route. When a domain file is really a lookup table (severity tiers, SLA
+clocks), YAML encodes it in ~40% fewer tokens and slices cleanly. Keep prose files as .md.
+
+```yaml
+# domains/tech-ops/SEVERITY.yaml (~0.6k tok; replaces a ~1.0k prose file)
+critical: { impact: "production down or data loss", page: immediately, examples: [gateway-5xx-storm, db-primary-down] }
+high:     { impact: "production degraded, customer-facing", page: 15m, examples: [elevated-error-rate, payment-latency] }
+medium:   { impact: "internal impact or single-tenant", page: business-hours, examples: [batch-delay, report-mismatch] }
+low:      { impact: "cosmetic or non-urgent", page: none, examples: [log-noise, doc-drift] }
+```
+
+Update the routing table to point at the .yaml; keep one `# comments` line for meaning.
+
+## Minimal router variant (~12 lines — smallest auditable floor)
+
+The always-loaded router can shrink further without giving up central routing (deleting CLAUDE.md
+saves ~400 cached tokens ≈ $0.002/session and loses auditability — trim instead of removing):
+
+```markdown
+# ICM router — one incident, one stage, one session; STATE.md carries state; /clear when done.
+| Task | Load exactly |
+|---|---|
+| Classify severity | domains/<domain>/SEVERITY.yaml |
+| Affected modules | 02-analyze/MODULES.md → named modules, sliced |
+| SLA / Escalation | domains/<domain>/SLA.md / ESCALATION.md |
+| Validate | schemas/<domain>/incident.schema.yaml |
+| Remediate | domains/<domain>/REMEDIATION.md |
+Rules: one domain/session · slice >8KB files · recall .icm/records first, file after · load report + /clear.
 ```
 
 ## Lean CLAUDE.md skeleton (target ≤60 lines, no @imports)

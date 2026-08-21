@@ -13,12 +13,13 @@ This skill is itself ICM-shaped: this file is the catalog (~1.3k tokens). Read a
 
 - User asks to **audit, fix, restructure, course-correct, or explain cost** → Audit mode: run `scripts/icm_audit.sh` from the workspace root, follow [references/audit.md](references/audit.md) step by step, and write the findings as `TOKEN_LEAK_AUDIT.md` using [references/report-template.md](references/report-template.md). Read [references/mechanics.md](references/mechanics.md) before promising any savings number.
 - User is **working an incident or a stage** → Discipline mode: apply the seven rules below. If the workspace has never been audited, offer the audit once, in one line, and carry on.
+- User names a **monthly dollar target**, says "strict mode", or the workspace CLAUDE.md declares it → read [references/strict-mode.md](references/strict-mode.md) and run under it: halved budgets, batched tool calls, dollar-priced load reports against a daily allowance.
 
 ## Why structure alone didn't cut the bill
 
 Every API call re-sends the entire conversation so far as input. There is no "session memory" that makes previously loaded files free — a file read on turn 2 is re-billed (cache-discounted, not free) on every turn after it. On top of that, every session starts with a fixed floor — system prompt, tool and MCP schemas, auto-loaded CLAUDE.md and its imports — that dwarfs a 2–8k stage budget when it's bloated. Detail and the honest math: [references/mechanics.md](references/mechanics.md). Read it before estimating, measuring, or explaining costs to the user.
 
-## The seven rules (Discipline mode)
+## The eight rules (Discipline mode)
 
 **1. Measure before reading.** Check size first (`wc -c file` — ls is fine too). Over ~8 KB (~2k tokens): don't read whole; `grep -n` for the section you need, then Read with offset/limit. Every byte loaded stays in this session's context and is re-sent on every remaining turn, so a narrow read pays off repeatedly.
 
@@ -36,6 +37,8 @@ Every API call re-sends the entire conversation so far as input. There is no "se
 
 **7. Crawling goes to scripts and subagents, not the main context.** Status scans, index rebuilds, file maps: shell one-liners, results summarized. Broad exploration ("which modules touch retry logic?"): a subagent that returns a ≤10-line answer, so the search transcript never enters this session. Subagent tokens still bill — the win is that a short summary replaces a long transcript in every later turn — so give subagents narrow questions, not open wanders.
 
+**8. Recall before analysis; file after judgment.** Before analyzing anything, run `scripts/icm_records.sh recall <distinctive words>` — a FRESH card answers for ~500 tokens instead of a re-derivation; a STALE card gets its changed anchors re-verified, never silently trusted. After any answer that took real reading, file a ≤20-line anchored card and `stamp` it. Protocol and card format: [references/memory.md](references/memory.md). This is the compounding rule — the workspace gets cheaper the longer it's used.
+
 ## Model per stage
 
 Intake/classification and schema verification are mechanical — run them on the cheapest model tier; analysis and remediation earn a mid tier. In Claude Code, `/model` switches, and since rule 4 makes each stage its own session, per-stage models are free to set. When the user is already on cheap models and still overspending, the cause is almost always volume × floor × session length — say so and point at the audit, not at further model downgrades.
@@ -46,5 +49,9 @@ Intake/classification and schema verification are mechanical — run them on the
 - [references/mechanics.md](references/mechanics.md) — how Claude Code API billing actually works: per-turn resend, prompt caching, the session floor, why staged messages in one chat don't save much, where real numbers live. Read before explaining or estimating cost.
 - [references/templates.md](references/templates.md) — copy-paste blocks: MODULES.md, STATE.md, the four stage-start prompts, load report, routing rows, lean CLAUDE.md skeleton.
 - [references/report-template.md](references/report-template.md) — the TOKEN_LEAK_AUDIT.md structure every audit delivers: findings by risk, quick wins with effort, scorecard, measurement plan. Read in Audit mode when writing the report.
+- [references/strict-mode.md](references/strict-mode.md) — budget-target operation: halved stage budgets, tool-call batching, 25-line outputs, ten-turn ceiling, per-session dollar pricing. Read when a monthly target or "strict mode" is declared.
+- [references/scaling.md](references/scaling.md) — the load patterns that bend the base rules: cross-domain incidents (knowledge crosses via records; contexts don't), module maps past ~25 entries (hierarchy, triage, subagent survey, stage splitting), and state bloat (rewrite-don't-append, notes.md overflow). Read when an incident spans domains, a module map outgrows flatness, or STATE.md flags over 50 lines.
 - [scripts/icm_audit.sh](scripts/icm_audit.sh) — mechanical audit: sizes, oversize files, CLAUDE.md imports, MCP config, missing map/state files. Run it; don't re-derive its findings by reading files.
 - [scripts/make_index.sh](scripts/make_index.sh) — generates a section index (headings, line numbers, per-section token estimates) for any large markdown file. Use it to build `.index.md` files instead of hand-writing them.
+- [scripts/icm_records.sh](scripts/icm_records.sh) — the records layer: `recall` (free card search with freshness), `stamp` (anchor sha computation), `check` (staleness audit). [references/memory.md](references/memory.md) has the protocol.
+- [scripts/icm_batch.sh](scripts/icm_batch.sh) — factory batching: run a queue file of tasks as isolated fresh sessions and file results for batch review. Decouples human pacing (which expires caches) from model runs.
