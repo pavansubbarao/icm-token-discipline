@@ -1,0 +1,1 @@
+Use the supplied icm-token-discipline skill for a read-only analysis. The local retry job appears to allow five attempts. What budget does this checkout use, and should I rely on the saved answer? Give source evidence and state the scope of your conclusion. Do not modify project files.
