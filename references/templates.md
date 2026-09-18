@@ -36,13 +36,18 @@ related:                      # linked incidents in other domains, if any (INC-x
 ## Open questions
 - Was the 5s timeout changed in last week's deploy?
 
-## Files consulted (do NOT re-read; trust the bullets above)
+## Evidence and scope
+- Scope: affected deployment; checked at <revision> by <check/result>
+- Dependencies/conditions: LB config and upstream latency; <citations>
+- Unknown: deployment override not yet inspected
+
+## Files consulted (reuse unless changed, contradicted, or out of scope)
 - 02-analyze/MODULES.md
 - src/load-balancer/health-check.js (lines 40–95)
 - domains/tech-ops/SEVERITY.md
 ```
 
-Discipline: each stage REWRITES findings (conclusions supersede evidence — one home per fact);
+Discipline: each stage REWRITES findings (one home per fact; preserve its verification and scope);
 never append stage-by-stage. Overflow that must persist → `incidents/<id>/notes.md`, linked here,
 loaded only on demand. Hard cap ~40 lines at every handoff ([scaling.md](scaling.md) §3).
 
@@ -57,6 +62,7 @@ Each stage is a fresh session. `/clear` first (or open a new terminal session). 
 
 2 — analyze:   Fresh session. Load incidents/<id>/STATE.md and 02-analyze/MODULES.md.
                Identify the 1–3 affected modules; load only those (sliced). Output analysis.
+               If contradicted or repeating without evidence, use the conditional reframe reference.
                Update STATE.md. Load report. Stop.
 
 3 — verify:    Fresh session. Load incidents/<id>/STATE.md and schemas/<domain>/incident.schema.yaml.
@@ -103,7 +109,7 @@ Over ~8k → add one line: which rule broke, and the fix (e.g., "rule 1: read pa
 | Where is X defined/used? | grep -rn "X" src/ (or the .index.md of the doc) |
 | What's in module M? | 02-analyze/MODULES.md row, then M's index |
 | Did we answer this before? | scripts/icm_records.sh recall <words> |
-| Are our records still valid? | scripts/icm_records.sh check |
+| Have declared evidence/dependencies changed? | scripts/icm_records.sh check |
 | What's leaking tokens? | scripts/icm_audit.sh |
 # Paid lane (worth model tokens): design, diagnosis, tradeoffs, root cause, review.
 ```
@@ -157,3 +163,19 @@ Reference docs (load on demand, never auto): PRD.md, FIRST_PRINCIPLES.md.
 Resolve domain first; one domain per session. MODULES.md before any code. Update STATE.md and
 emit a load report before stopping. Stage prompts: PROMPTS.md.
 ```
+
+## Optional stage contract (for ambiguous or stalled work)
+
+Resolve this within the active stage; do not create a mandatory extra stage.
+
+```markdown
+Outcome: <specific user result>
+Inputs: <exact instance paths; stable references loaded only as needed>
+Allowed work: <scope and permitted actions>
+Output: <existing state/artifact path>
+Acceptance: <observable pass condition fixed before the check>
+Reframe trigger: <contradiction, unresolved dependency, or repeated attempt>
+```
+
+Use [reframe.md](reframe.md) only on the trigger. Update the owning state or record,
+then the reusable stage reference if a general rule was actually established.
