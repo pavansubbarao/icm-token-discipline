@@ -7,12 +7,12 @@ description: Enforce per-stage token discipline inside an ICM workspace and audi
 
 Companion to `icm-architect`: that skill builds the shelves; this one polices what gets carried off them — and finds where the bill actually comes from. The two concerns are different. Folder structure controls what *can* be loaded per stage. The bill is controlled by session shape: what loads automatically at session start, how long conversations run, and how often files re-enter context. A workspace can be perfectly structured and still expensive.
 
-This skill is itself ICM-shaped: this file is the catalog (~1.3k tokens). Read a reference only when a step below says so, never all of them.
+This skill is itself ICM-shaped: this file is the catalog. Read a reference only when a step below says so, never all of them.
 
 ## Triage — pick a mode
 
 - User asks to **audit, fix, restructure, course-correct, or explain cost** → Audit mode: run `scripts/icm_audit.sh` from the workspace root, follow [references/audit.md](references/audit.md) step by step, and write the findings as `TOKEN_LEAK_AUDIT.md` using [references/report-template.md](references/report-template.md). Read [references/mechanics.md](references/mechanics.md) before promising any savings number.
-- User is **working an incident or a stage** → Discipline mode: apply the seven rules below. If the workspace has never been audited, offer the audit once, in one line, and carry on.
+- User is **working an incident or a stage** → Discipline mode: apply the eight rules below. If the workspace has never been audited, offer the audit once, in one line, and carry on.
 - User names a **monthly dollar target**, says "strict mode", or the workspace CLAUDE.md declares it → read [references/strict-mode.md](references/strict-mode.md) and run under it: halved budgets, batched tool calls, dollar-priced load reports against a daily allowance.
 
 ## Why structure alone didn't cut the bill
@@ -31,13 +31,13 @@ Every API call re-sends the entire conversation so far as input. There is no "se
 
 **Guardrail:** when a stage completes, the session is over. If asked to continue into the next stage in the same conversation, write STATE.md first and recommend `/clear` — proceed only if the user explicitly declines after hearing why (each further turn re-bills everything loaded so far). And if a pause longer than ~5 minutes is coming mid-stage, close the stage now: the prompt cache expires on idle, so the next message after a break re-bills the entire history at write rates (~12× the cached price). Sessions measured in hours are the leak; sessions measured in minutes are the fix.
 
-**5. Never re-read.** If a file is already in context this session (including CLAUDE.md, which Claude Code auto-loads), reference it — a second Read doubles the charge for zero new information. Across sessions, STATE.md's consulted-files list plays the same role: trust recorded conclusions instead of re-deriving them.
+**5. Reuse evidence within its scope.** Avoid duplicate reads of unchanged content already in context. Across sessions, consult STATE.md and records, including their conditions and verification. A consulted-files list is a navigation aid, not proof: changed dependencies, contradictions, or a different question justify a targeted recheck.
 
 **6. Close every stage with a load report — and a short one.** Exact format in templates.md: each file read → bytes → est. tokens (bytes ÷ 4), one total, one line naming the session floor as separate, one session-hygiene line (`/clear` next). If the stage total exceeds ~8k, say which rule was broken and what to change — don't just report the overrun. State that these are estimates; real numbers come from `/context` (composition) and `/cost` (spend) in Claude Code. The stage output itself is part of the budget: conclusions only, ≤~40 lines, never restating loaded file content — output tokens bill ~5× input, and everything echoed rides along in every later turn.
 
 **7. Crawling goes to scripts and subagents, not the main context.** Status scans, index rebuilds, file maps: shell one-liners, results summarized. Broad exploration ("which modules touch retry logic?"): a subagent that returns a ≤10-line answer, so the search transcript never enters this session. Subagent tokens still bill — the win is that a short summary replaces a long transcript in every later turn — so give subagents narrow questions, not open wanders.
 
-**8. Recall before analysis; file after judgment.** Before analyzing anything, run `scripts/icm_records.sh recall <distinctive words>` — a FRESH card answers for ~500 tokens instead of a re-derivation; a STALE card gets its changed anchors re-verified, never silently trusted. After any answer that took real reading, file a ≤20-line anchored card and `stamp` it. Protocol and card format: [references/memory.md](references/memory.md). This is the compounding rule — the workspace gets cheaper the longer it's used.
+**8. Recall before analysis; file after judgment.** Run `scripts/icm_records.sh recall <distinctive words>`. `UNCHANGED_EVIDENCE` means declared bytes match, not that the answer is valid. Check scope, conditions, and dependencies before reuse; re-verify changed or contradictory evidence. File a compact conclusion with its verification, then stamp its evidence hashes. Read [references/memory.md](references/memory.md) when using records. On contradiction, an unresolved dependency, or two attempts without new evidence, load [references/reframe.md](references/reframe.md) for one bounded pass. Clear tasks skip it.
 
 ## Model per stage
 
@@ -53,5 +53,5 @@ Intake/classification and schema verification are mechanical — run them on the
 - [references/scaling.md](references/scaling.md) — the load patterns that bend the base rules: cross-domain incidents (knowledge crosses via records; contexts don't), module maps past ~25 entries (hierarchy, triage, subagent survey, stage splitting), and state bloat (rewrite-don't-append, notes.md overflow). Read when an incident spans domains, a module map outgrows flatness, or STATE.md flags over 50 lines.
 - [scripts/icm_audit.sh](scripts/icm_audit.sh) — mechanical audit: sizes, oversize files, CLAUDE.md imports, MCP config, missing map/state files. Run it; don't re-derive its findings by reading files.
 - [scripts/make_index.sh](scripts/make_index.sh) — generates a section index (headings, line numbers, per-section token estimates) for any large markdown file. Use it to build `.index.md` files instead of hand-writing them.
-- [scripts/icm_records.sh](scripts/icm_records.sh) — the records layer: `recall` (free card search with freshness), `stamp` (anchor sha computation), `check` (staleness audit). [references/memory.md](references/memory.md) has the protocol.
+- [scripts/icm_records.sh](scripts/icm_records.sh) — the records layer: `recall` (literal card search), `stamp` (declared evidence hashes), `check` (evidence drift; not claim verification). [references/memory.md](references/memory.md) has the protocol.
 - [scripts/icm_batch.sh](scripts/icm_batch.sh) — factory batching: run a queue file of tasks as isolated fresh sessions and file results for batch review. Decouples human pacing (which expires caches) from model runs.
