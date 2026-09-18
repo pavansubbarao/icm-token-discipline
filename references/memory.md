@@ -1,49 +1,92 @@
-# The records layer — never pay for the same judgment twice
+# Records: reuse a conclusion within its evidence and scope
 
-Every answer that took real reading gets filed once as an anchored card in `.icm/records/`. Every later question starts with a free grep of those cards. A fresh hit answers for the cost of a card (~300–600 tokens) instead of the cost of re-deriving it (3–10k+). Over weeks, the workspace learns and sessions get cheaper — the annuity.
+Keep answered questions in `.icm/records/`. Recall can avoid repeated exploration,
+but matching hashes establish only that declared source bytes have not changed.
+They cannot establish that a conclusion was correct, is applicable now, or lists
+every dependency. Reading command output still consumes model context.
 
-Three verbs, all free (no model tokens): `scripts/icm_records.sh recall|stamp|check`.
+Run `scripts/icm_records.sh recall|stamp|check` from the subject workspace root.
+Requires Bash and Python 3.8+; no third-party Python packages or model calls.
 
-## Protocol
+## Reuse protocol
 
-**Before any analysis** (rule 8): run `icm_records.sh recall <3-6 distinctive words from the question>`.
-- **FRESH hit** → answer from the card. Cite it. Load at most one anchor slice to quote exact code if the user needs it. Do not re-derive what the card already settles.
-- **STALE hit** → the anchored content changed since filing. Say so, re-verify only the stale anchors (slice those ranges, compare), update the card, re-`stamp`. Never silently trust a stale card — and never silently discard one either; the diff between card and code is usually the fastest path to the new answer.
-- **No hit** → proceed with normal disciplined analysis.
+Before analysis, `recall <3-6 distinctive words>`. Search is case-insensitive,
+literal, and returns at most three cards; query words shorter than three characters
+are ignored. Discovery is a convenience, not a completeness check.
 
-**After any answer that took real reading** (more than ~2k tokens of loads): file a card.
-1. Write `.icm/records/<slug>.md` — question line, anchors list, answer ≤20 lines with `file:line` citations. Template below.
-2. `icm_records.sh stamp .icm/records/<slug>.md` — computes the sha for each anchor range.
-3. Mention the filing in the load report ("filed: <slug>.md").
+| Result | What to do |
+|---|---|
+| `UNCHANGED_EVIDENCE` | Check that the question, configuration, scope, verification method, and known dependencies match. Reuse a supported conclusion only within those conditions. |
+| `STALE_EVIDENCE` | Inspect the changed/missing evidence and its effect on the claim. Update the answer and verification before restamping. |
+| `INVALID_RECORD` | Repair the format or citation; do not treat a parsing failure as evidence of freshness. |
+| No hit | Continue scoped analysis. |
 
-**Anchors are the safety.** A card's authority comes from its anchors: exact `path:start-end` ranges whose content hash is stored. `check` (run it in every audit, and in CI freely — it's a plain script) tells you which cards still stand. A memory layer without staleness detection is a wrong-answer generator; this one refuses to be.
+Legacy cards still load, but absent scope/dependency/check metadata is **unknown**,
+not implicit verification. A contradiction overrides an unchanged hash: inspect
+the smallest relevant source or configuration, even if it was consulted before.
+If the investigation repeats without new evidence, use [reframe.md](reframe.md).
+Never restamp merely to silence a failure.
 
 ## Card template
 
+The example is illustrative; substitute real paths, scope, revision, and checks.
+Keep a card around 25 lines. Link a longer evidence record rather than copying it.
+
 ```markdown
 ---
-q: where does express set the etag header and under what conditions
+q: what is the retry budget
+claim_status: verified
+scope: local worker with repository defaults
+conditions: no runtime override; config loaded at process start
 anchors:
-- lib/response.js:180-195 sha:000000000000
-- lib/utils.js:125-155 sha:000000000000
-- lib/application.js:90-100 sha:000000000000
-filed: 2026-08-21
+- worker.py:1-3 sha:000000000000
+dependencies:
+- config.py:* sha:000000000000
+verified_at_revision: <immutable commit>
+verification: <command or source check and observed result>
+unknowns: deployed overrides not inspected
+filed: YYYY-MM-DD
 ---
-ETag is set in res.send (lib/response.js ~186-191): only when no ETag header exists,
-app's 'etag fn' is a function, and a body is present. The fn comes from app.set('etag', v)
-compiling via compileETag (lib/utils.js:130). Default: 'weak' (lib/application.js:95).
-res.sendFile delegates: opts.etag = app.enabled('etag') (lib/response.js:402).
+The local retry budget is 3 (worker.py:retry_budget, config.py:MAX_ATTEMPTS).
+Deployment values are outside this claim's scope.
 ```
 
-(Sha fields start as zeros; `stamp` fills them.)
+`claim_status: verified` is an author's evidence-backed judgment. The script never
+sets or validates it. Record hypotheses in STATE.md/open questions instead of
+presenting them as established answers. Metadata carries scope, not extra authority.
 
-## What deserves a card
+After a useful answer: write the scoped conclusion and its verification, list
+its anchors **and the known dependencies capable of changing it**, then `stamp`
+the card and mention it in the load report. Configuration, schemas, registries,
+consumers, and external versions may matter even when the cited function is stable.
+For external evidence, cite its version in prose; a local hash does not check a
+remote service. If a material dependency is unknown, narrow the answer or inspect it.
 
-File: root-cause conclusions, "where/how does X work" findings, configuration meanings, decisions with reasons. Don't file: trivia a grep answers instantly, anything speculative, secrets, or content from files you're not permitted to copy — cards go wherever the workspace goes.
+## Format and CLI contract
 
-## Hygiene
+- Frontmatter starts and ends with `---`. Exactly one `anchors:` block contains
+  at least one `- path:start-end sha:xxxxxxxxxxxx` row. Optional `dependencies:`
+  uses the same syntax. `path:*` hashes the whole file. Paths are relative to the
+  workspace root (spaces supported); ranges are inclusive, one-based, and in bounds.
+- This is a constrained evidence-list format, not a general YAML parser: no quoted
+  paths, inline lists of citations, or multiline evidence rows. Other metadata is
+  preserved, not semantically validated. Empty `dependencies: []` is allowed.
+- SHA values retain the legacy 12-hex SHA-1 format for compatibility. They detect
+  ordinary byte drift; they are not cryptographic provenance or a security boundary.
+- `stamp <card>` permits omitted hashes/zero placeholders. It validates all evidence
+  before atomically replacing the card, preserving its permissions and other text.
+  Missing evidence or invalid ranges leave the card unchanged. It does not verify
+  the answer, lock the source tree, or discover transitive dependencies.
+- `check [records_dir]` checks all top-level `*.md` cards. `recall` checks returned
+  hits. Exit **0**: all checked evidence unchanged; **1**: stale/missing evidence,
+  no records, or no search hit; **2**: invalid record, usage, or I/O error. Mixed
+  results return the highest code. These codes do not score answer correctness.
 
-- One card per question; a new answer to the same question **updates** the card (one home per fact).
-- Cards are ≤25 lines. A card that wants to be longer is a document, not a record — link it instead.
-- `icm_records.sh check` in every audit; delete cards whose subject no longer exists.
-- Records are plain files in the repo: they ride along in git, review like code, and cost nothing until read.
+Migration: old `FRESH`/`STALE` output labels are replaced. `recall` now returns a
+nonzero status for stale/invalid hits, and empty directories no longer pass.
+Update callers that parse those labels or run under `set -e`. Existing valid range
+hashes remain compatible; reviewing legacy cards does not require mass restamping.
+
+One question has one owning card. Keep citations and unresolved limits when rewriting
+it. Run `check` during an audit, then review scope and coverage separately. Remove or
+archive obsolete cards deliberately; do not delete merely because a citation moved.
